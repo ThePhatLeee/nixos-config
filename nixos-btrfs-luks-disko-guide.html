@@ -917,17 +917,19 @@
       <div class="flow-arrow">→</div>
       <div class="flow-step"><span class="num">2</span> Run disko</div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step"><span class="num">3</span> Create swapfile</div>
+      <div class="flow-step"><span class="num">3</span> Regen hardware-config</div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step"><span class="num">4</span> Get offset → edit config</div>
+      <div class="flow-step"><span class="num">4</span> Create swapfile</div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step"><span class="num">5</span> Copy repo → /mnt</div>
+      <div class="flow-step"><span class="num">5</span> Get offset → edit config</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><span class="num">6</span> Copy repo → /mnt</div>
     </div>
 
     <h3>1 — Clone repo to /tmp</h3>
     <div class="code-block">
       <div class="code-header"><span class="code-label">to /tmp — disk not formatted yet, /tmp is in RAM</span><span class="code-tag tag-bash">bash</span></div>
-      <pre><span class="cmd">nix-shell</span> <span class="flag">-p</span> git <span class="flag">--run</span> <span class="val">"git clone https://github.com/phatle/nixos-config /tmp/nixos-config"</span>
+      <pre><span class="cmd">nix-shell</span> <span class="flag">-p</span> git <span class="flag">--run</span> <span class="val">"git clone https://github.com/ThePhatLeee/nixos-config /tmp/nixos-config"</span>
 <span class="comment"># OR from USB:
 # cp -r /run/media/nixos/usb/nixos-config /tmp/nixos-config</span>
 
@@ -949,7 +951,25 @@
 <span class="cmd">findmnt</span> <span class="flag">--real</span>    <span class="comment"># should show all 9 subvolumes under /mnt</span></pre>
     </div>
 
-    <h3>3 — Create the swapfile</h3>
+    <h3>3 — Regenerate hardware-configuration.nix</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-label">required on any hardware — replaces the original machine's config</span><span class="code-tag tag-bash">bash</span></div>
+      <pre><span class="comment"># Generate from the mounted system (--no-filesystems: disks.nix owns those)</span>
+<span class="cmd">sudo</span> nixos-generate-config <span class="flag">--no-filesystems</span> <span class="flag">--root</span> <span class="path">/mnt</span>
+
+<span class="comment"># Copy the generated file into the cloned repo</span>
+<span class="cmd">cp</span> <span class="path">/mnt/etc/nixos/hardware-configuration.nix</span> \
+   <span class="path">/tmp/nixos-config/hosts/nixos/hardware-configuration.nix</span></pre>
+    </div>
+    <div class="callout warn">
+      <strong>Do not skip this on new hardware.</strong> The repo ships with
+      <code>hardware-configuration.nix</code> from the original machine. New hardware may
+      have different kernel modules (storage controller, CPU microcode, GPU).
+      Skipping this means the initrd may not find the NVMe drive — you get a black screen
+      after GRUB with no LUKS prompt.
+    </div>
+
+    <h3>4 — Create the swapfile</h3>
     <div class="code-block">
       <div class="code-header"><span class="code-label">BTRFS swapfile — must use btrfs mkswapfile, not fallocate/dd</span><span class="code-tag tag-bash">bash</span></div>
       <pre><span class="comment"># Adjust size to your RAM (for full hibernation, size >= RAM)</span>
@@ -959,7 +979,7 @@
 <span class="cmd">ls</span> <span class="flag">-lh</span> <span class="path">/mnt/swap/swapfile</span></pre>
     </div>
 
-    <h3>4 — Get resume_offset and update config</h3>
+    <h3>5 — Get resume_offset and update config</h3>
     <div class="code-block">
       <div class="code-header"><span class="code-label">compute hibernation resume offset — do this now</span><span class="code-tag tag-bash">bash</span></div>
       <pre><span class="cmd">sudo</span> btrfs inspect-internal map-swapfile <span class="flag">-r</span> <span class="path">/mnt/swap/swapfile</span>
@@ -970,9 +990,10 @@
 #         physical start:  <span class="hi">4096000</span>        ← copy THIS number
 #         flags:           0x1</span>
 
-<span class="comment"># Edit disks.nix — replace 0 with the physical start value</span>
+<span class="comment"># Edit disks.nix — uncomment the two hibernation lines and replace the placeholder</span>
 <span class="cmd">nano</span> <span class="path">/tmp/nixos-config/modules/nixos/disks.nix</span>
-<span class="comment"># Change: boot.kernelParams = [ "resume_offset=<span class="hi">4096000</span>" ];</span></pre>
+<span class="comment"># Uncomment: boot.resumeDevice = "/dev/mapper/cryptroot";
+# Uncomment: boot.kernelParams = [ "resume_offset=<span class="hi">4096000</span>" ];</span></pre>
     </div>
 
     <div class="callout warn">
@@ -981,7 +1002,7 @@
       and update this value, then <code>nixos-rebuild switch</code>.
     </div>
 
-    <h3>5 — Copy repo to the new install</h3>
+    <h3>6 — Copy repo to the new install</h3>
     <div class="code-block">
       <div class="code-header"><span class="code-label">repo goes to its final location at ~/nixos-config</span><span class="code-tag tag-bash">bash</span></div>
       <pre><span class="cmd">mkdir</span> <span class="flag">-p</span> <span class="path">/mnt/home/phatle</span>
