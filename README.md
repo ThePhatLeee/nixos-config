@@ -11,7 +11,7 @@ nixos-config/
 │
 ├── hosts/nixos/
 │   ├── default.nix                  # Hostname, stateVersion, imports all modules
-│   └── hardware-configuration.nix   # Machine-specific hardware (keep out of git or gitignore)
+│   └── hardware-configuration.nix   # Machine-specific hardware — committed, but regenerate for each new machine
 │
 ├── modules/nixos/                   # System-level NixOS modules
 │   ├── boot.nix                     # systemd-boot, latest kernel, quiet boot
