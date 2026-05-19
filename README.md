@@ -59,6 +59,55 @@ nixos-config/
 | `dotfiles/waybar/` | `~/.config/waybar/` (symlink) | `killall waybar; waybar &` |
 | Nix modules | System/home config | `sudo nixos-rebuild switch --flake ~/nixos-config#nixos` |
 
+## Fresh install from ISO
+
+Boot the NixOS ISO, then run these steps in order:
+
+```bash
+# 1. Confirm your disk device
+lsblk
+
+# 2. Clone repo to RAM
+nix-shell -p git --run "git clone https://github.com/ThePhatLeee/nixos-config /tmp/nixos-config"
+
+# 3. Edit disko.nix if your disk is not /dev/nvme0n1
+nano /tmp/nixos-config/disko.nix   # change device = "/dev/nvme0n1" if needed
+
+# 4. Run disko (WIPES DISK — formats LUKS2 + BTRFS, mounts to /mnt)
+sudo nix --extra-experimental-features 'nix-command flakes' run \
+  github:nix-community/disko -- --mode disko /tmp/nixos-config/disko.nix
+
+# 5. Regenerate hardware-configuration.nix for THIS machine
+#    (the repo ships with the original machine's config — always replace it)
+sudo nixos-generate-config --no-filesystems --root /mnt
+cp /mnt/etc/nixos/hardware-configuration.nix \
+   /tmp/nixos-config/hosts/nixos/hardware-configuration.nix
+
+# 6. Create swapfile (adjust --size to >= your RAM for hibernation)
+sudo btrfs filesystem mkswapfile --size 16G /mnt/swap/swapfile
+
+# 7. Get hibernation resume offset
+sudo btrfs inspect-internal map-swapfile -r /mnt/swap/swapfile
+#    Note the "physical start" number, then edit disks.nix:
+nano /tmp/nixos-config/modules/nixos/disks.nix
+#    Uncomment the two hibernation lines and replace REPLACE_WITH_ACTUAL_OFFSET
+
+# 8. Copy repo to the installed system (mkdir is required — /mnt/home/phatle doesn't exist yet)
+mkdir -p /mnt/home/phatle
+cp -r /tmp/nixos-config /mnt/home/phatle/nixos-config
+
+# 9. Install
+sudo nixos-install --flake /mnt/home/phatle/nixos-config#nixos --no-root-passwd
+
+# 10. Reboot — LUKS passphrase prompt appears, then SDDM loads
+reboot
+```
+
+After first login, fix ownership and optionally enroll TPM2 auto-unlock (see `modules/nixos/tpm.nix`):
+```bash
+sudo chown -R phatle:users ~/nixos-config
+```
+
 ## First-time setup
 
 ```bash
