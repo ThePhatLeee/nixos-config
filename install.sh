@@ -66,8 +66,10 @@ btrfs filesystem mkswapfile --size "$SWAP_SIZE" /mnt/swap/swapfile
 # ── Step 4: Compute resume offset and patch disks.nix ────────────────────────
 echo ""
 echo "==> [4/6] Computing hibernation resume offset..."
-OFFSET=$(btrfs inspect-internal map-swapfile -r /mnt/swap/swapfile \
-  | awk '/physical start/{print $NF}')
+# || true: tolerate btrfs failure so set -e doesn't abort before the fallback.
+# /physical/ matches "physical start:" across btrfs-progs versions.
+OFFSET=$(btrfs inspect-internal map-swapfile -r /mnt/swap/swapfile 2>/dev/null \
+  | awk '/physical/{print $NF}') || true
 
 if [[ "$OFFSET" =~ ^[0-9]+$ ]]; then
   echo "    resume_offset = $OFFSET"

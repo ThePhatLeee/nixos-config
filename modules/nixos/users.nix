@@ -1,13 +1,17 @@
 { config, lib, pkgs, ... }:
 
 {
-  # Root: password set during install (nixos-install prompts).
-  # Locked from SSH; usable only at physical console for recovery.
+  # Root: initialHashedPassword = "" means passwordless root at the physical
+  # console — required for emergency mode recovery (sulogin). SSH root login
+  # remains blocked. Change with: sudo passwd root
+  users.users.root.initialHashedPassword = "";
   services.openssh.settings.PermitRootLogin = lib.mkDefault "no";
 
   users.users.phatle = {
     isNormalUser = true;
-    description = "phatle";
+    description  = "phatle";
+    # Temporary first-login password — change immediately with: passwd
+    initialPassword = "nixos";
     extraGroups = [
       "wheel"           # sudo
       "networkmanager"  # nmcli/nmtui without sudo
