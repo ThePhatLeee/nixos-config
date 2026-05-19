@@ -61,39 +61,42 @@ nixos-config/
 
 ## Fresh install from ISO
 
-Boot the NixOS ISO. The script handles the painful disk part — you do the rest.
+**Phase 1 — on the ISO (sets up disks + standard NixOS install):**
 
 ```bash
-# 1. Run the disk setup script (prompts for disk, does partition/LUKS/BTRFS/mount/swap)
-sudo bash <(curl -sL https://raw.githubusercontent.com/ThePhatLeee/nixos-config/main/install.sh)
-# — OR — boot with a USB copy of the repo and run: sudo bash /path/to/install.sh
-
-# 2. Clone config (script prints this as step 1 of its output)
-nix-shell -p git --run \
-  "git clone https://github.com/ThePhatLeee/nixos-config /tmp/nixos-config"
-
-# 3. Copy generated hardware config into the repo
-cp /mnt/etc/nixos/hardware-configuration.nix \
-   /tmp/nixos-config/hosts/nixos/hardware-configuration.nix
-
-# 4. (Optional) Enable hibernation — edit modules/nixos/disks.nix,
-#    uncomment the two boot.resumeDevice / boot.kernelParams lines,
-#    paste the resume_offset the script printed.
-
-# 5. Install
-mkdir -p /mnt/home/phatle
-cp -r /tmp/nixos-config /mnt/home/phatle/nixos-config
-nixos-install --flake /mnt/home/phatle/nixos-config#nixos --no-root-passwd
-
-# 6. Reboot — LUKS prompt → SDDM login: phatle / nixos
-#    Then immediately: passwd
+# Run the disk setup + install script
+# It partitions, encrypts, formats BTRFS, mounts, creates swap, then runs nixos-install.
+# You will be prompted for: disk choice, LUKS passphrase, root password.
+sudo bash <(curl -L https://raw.githubusercontent.com/ThePhatLeee/nixos-config/main/install.sh)
 ```
 
-After first login:
+Reboot. Log in as **root** (password you just set).
+
+---
+
+**Phase 2 — after first boot (switch to this flake config):**
+
 ```bash
-sudo chown -R phatle:users ~/nixos-config
-passwd   # change the default password
+# 1. Clone this repo
+nix-shell -p git --run "git clone https://github.com/ThePhatLeee/nixos-config ~/nixos-config"
+
+# 2. Regenerate hardware config for this machine (no filesystems — the flake owns those)
+nixos-generate-config --no-filesystems
+cp /etc/nixos/hardware-configuration.nix \
+   ~/nixos-config/hosts/nixos/hardware-configuration.nix
+
+# 3. (Optional) Enable hibernation
+#    Get offset: btrfs inspect-internal map-swapfile -r /swap/swapfile
+#    Edit ~/nixos-config/modules/nixos/disks.nix — uncomment the two lines, set the offset
+
+# 4. Switch to flake config (SDDM + Hyprland will start immediately after)
+sudo nixos-rebuild switch --flake ~/nixos-config#nixos
+
+# 5. Set the phatle user password
+passwd phatle
 ```
+
+Login at SDDM: **phatle** / **nixos** → immediately run `passwd` to set a real password.
 
 ## First-time setup
 
