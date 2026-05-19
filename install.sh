@@ -21,7 +21,8 @@ INPUT="${INPUT#/dev/}"
 DISK="/dev/$INPUT"
 [[ -b "$DISK" ]] || { echo "Not a block device: $DISK"; exit 1; }
 
-[[ "$DISK" =~ nvme ]] && PART="${DISK}p" || PART="$DISK"
+# Partition suffix: names ending in a digit (nvme0n1, mmcblk0) use pN; others (sda) use N
+[[ "$INPUT" =~ [0-9]$ ]] && PART="${DISK}p" || PART="$DISK"
 EFI="${PART}1"
 LUKS="${PART}2"
 
@@ -111,6 +112,11 @@ fi
 
 nixos-install --root /mnt
 
+# Set phatle's password now inside the chroot — no plaintext password in config or git
+echo ""
+echo "==> Set password for user 'phatle' (you will use this to log in after reboot):"
+nixos-enter --root /mnt -- passwd phatle
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 echo ""
 echo "============================================================"
@@ -143,11 +149,8 @@ fi
 echo "  4. Switch to flake config:"
 echo "       sudo nixos-rebuild switch --flake ~/nixos-config#nixos"
 echo ""
-echo "  5. Set user password (phatle account is created by the flake):"
-echo "       passwd phatle"
-echo ""
-echo "  SDDM will start automatically after step 4."
-echo "  Login: phatle / nixos  (change immediately with passwd)"
+echo "  SDDM starts automatically after step 4."
+echo "  Login at SDDM: phatle + the password you just set above."
 echo "============================================================"
 echo ""
 read -rp "Reboot now? [Y/n]: " REBOOT

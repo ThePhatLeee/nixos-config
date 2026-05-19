@@ -64,13 +64,13 @@ nixos-config/
 **Phase 1 — on the ISO (sets up disks + standard NixOS install):**
 
 ```bash
-# Run the disk setup + install script
-# It partitions, encrypts, formats BTRFS, mounts, creates swap, then runs nixos-install.
-# You will be prompted for: disk choice, LUKS passphrase, root password.
+# Partitions, encrypts, formats BTRFS, mounts, creates swap, runs nixos-install.
+# Prompts for: disk, LUKS passphrase, root password, phatle user password.
+# No passwords are stored in the config or git history.
 sudo bash <(curl -L https://raw.githubusercontent.com/ThePhatLeee/nixos-config/main/install.sh)
 ```
 
-Reboot. Log in as **root** (password you just set).
+Reboot. Log in as **root**.
 
 ---
 
@@ -89,14 +89,11 @@ cp /etc/nixos/hardware-configuration.nix \
 #    Get offset: btrfs inspect-internal map-swapfile -r /swap/swapfile
 #    Edit ~/nixos-config/modules/nixos/disks.nix — uncomment the two lines, set the offset
 
-# 4. Switch to flake config (SDDM + Hyprland will start immediately after)
+# 4. Switch to flake config (SDDM + Hyprland start immediately after)
 sudo nixos-rebuild switch --flake ~/nixos-config#nixos
-
-# 5. Set the phatle user password
-passwd phatle
 ```
 
-Login at SDDM: **phatle** / **nixos** → immediately run `passwd` to set a real password.
+Login at SDDM: **phatle** + the password you set during install.
 
 ## First-time setup
 

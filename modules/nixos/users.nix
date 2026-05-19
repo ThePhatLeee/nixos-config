@@ -10,9 +10,9 @@
   users.users.phatle = {
     isNormalUser = true;
     description  = "phatle";
-    # Temporary first-login password applied when the flake is first activated.
-    # Change immediately after first login: passwd
-    initialPassword = "nixos";
+    # Password is set interactively during install (install.sh runs passwd phatle
+    # inside the chroot). mutableUsers = true (default) preserves it across rebuilds.
+    # No password is stored in the Nix config or git history.
     extraGroups = [
       "wheel"           # sudo
       "networkmanager"  # nmcli/nmtui without sudo
