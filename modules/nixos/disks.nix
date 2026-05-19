@@ -42,14 +42,16 @@
   # Hibernation — resume from the encrypted BTRFS swapfile.
   #
   # SETUP REQUIRED before enabling:
-  #   1. After first boot, compute the swapfile physical offset:
-  #        sudo btrfs inspect-internal map-swapfile -r /swap/swapfile
-  #   2. Replace the placeholder values below with the reported "physical start" number.
-  #   3. Uncomment the two lines and rebuild.
+  #   During install (target mounted at /mnt):
+  #     sudo btrfs inspect-internal map-swapfile -r /mnt/swap/swapfile
+  #   After a running boot (filesystem mounted at /):
+  #     sudo btrfs inspect-internal map-swapfile -r /swap/swapfile
+  #   Copy the "physical start" number, uncomment the two lines below,
+  #   replace REPLACE_WITH_ACTUAL_OFFSET, and nixos-rebuild switch.
   #
-  # WARNING: leaving resume_offset=0 with a resumeDevice set causes the kernel to
-  # scan the BTRFS superblock (offset 0) for a hibernation image, which is wrong and
-  # can delay or confuse boot. Keep these commented out until the real offset is known.
+  # WARNING: keep these commented out until a real offset is known.
+  # An incorrect or placeholder offset causes the kernel to scan the wrong
+  # location for a hibernation image, which can delay or confuse boot.
   #
   # boot.resumeDevice = "/dev/mapper/cryptroot";
   # boot.kernelParams = [ "resume_offset=REPLACE_WITH_ACTUAL_OFFSET" ];
