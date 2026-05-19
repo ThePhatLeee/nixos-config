@@ -1,16 +1,17 @@
 { config, lib, pkgs, ... }:
 
 {
-  # Root: initialHashedPassword = "" means passwordless root at the physical
-  # console — required for emergency mode recovery (sulogin). SSH root login
-  # remains blocked. Change with: sudo passwd root
-  users.users.root.initialHashedPassword = "";
+  # Root password is set during nixos-install (it always prompts).
+  # With mutableUsers = true (default), that password persists across
+  # nixos-rebuild switch — never gets reset by the flake.
+  # SSH root login is blocked; root is only usable at the physical console.
   services.openssh.settings.PermitRootLogin = lib.mkDefault "no";
 
   users.users.phatle = {
     isNormalUser = true;
     description  = "phatle";
-    # Temporary first-login password — change immediately with: passwd
+    # Temporary first-login password applied when the flake is first activated.
+    # Change immediately after first login: passwd
     initialPassword = "nixos";
     extraGroups = [
       "wheel"           # sudo

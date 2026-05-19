@@ -61,24 +61,42 @@ nixos-config/
 
 ## Fresh install from ISO
 
-Boot the NixOS ISO, then run **3 commands** — the install script handles everything else:
+**Phase 1 — on the ISO (sets up disks + standard NixOS install):**
 
 ```bash
-# 1. Get git and clone
-nix-shell -p git --run "git clone https://github.com/ThePhatLeee/nixos-config /tmp/nixos-config"
-
-# 2. Run the install script  (prompts for disk, then fully automated)
-sudo bash /tmp/nixos-config/install.sh
-
-# 3. Reboot when prompted
+# Run the disk setup + install script
+# It partitions, encrypts, formats BTRFS, mounts, creates swap, then runs nixos-install.
+# You will be prompted for: disk choice, LUKS passphrase, root password.
+sudo bash <(curl -L https://raw.githubusercontent.com/ThePhatLeee/nixos-config/main/install.sh)
 ```
 
-The script does in order: disko → hardware-config regeneration → swapfile → resume offset → copy → nixos-install.
+Reboot. Log in as **root** (password you just set).
 
-After first login, fix ownership and optionally enroll TPM2 auto-unlock (see `modules/nixos/tpm.nix`):
+---
+
+**Phase 2 — after first boot (switch to this flake config):**
+
 ```bash
-sudo chown -R phatle:users ~/nixos-config
+# 1. Clone this repo
+nix-shell -p git --run "git clone https://github.com/ThePhatLeee/nixos-config ~/nixos-config"
+
+# 2. Regenerate hardware config for this machine (no filesystems — the flake owns those)
+nixos-generate-config --no-filesystems
+cp /etc/nixos/hardware-configuration.nix \
+   ~/nixos-config/hosts/nixos/hardware-configuration.nix
+
+# 3. (Optional) Enable hibernation
+#    Get offset: btrfs inspect-internal map-swapfile -r /swap/swapfile
+#    Edit ~/nixos-config/modules/nixos/disks.nix — uncomment the two lines, set the offset
+
+# 4. Switch to flake config (SDDM + Hyprland will start immediately after)
+sudo nixos-rebuild switch --flake ~/nixos-config#nixos
+
+# 5. Set the phatle user password
+passwd phatle
 ```
+
+Login at SDDM: **phatle** / **nixos** → immediately run `passwd` to set a real password.
 
 ## First-time setup
 

@@ -1,113 +1,154 @@
 #!/usr/bin/env bash
-# NixOS install script — run after cloning the repo to /tmp/nixos-config
+# Disk setup for NixOS.
+# Does the painful manual work: partition → LUKS → BTRFS → mount → swap → nixos-install.
+# After reboot, clone this repo and run: nixos-rebuild switch --flake ~/nixos-config#nixos
 #
-# Usage (from NixOS ISO):
-#   sudo bash /tmp/nixos-config/install.sh
+# Usage: sudo bash install.sh
 #
 set -euo pipefail
 
-# ── Root check ────────────────────────────────────────────────────────────────
 [[ $EUID -eq 0 ]] || { echo "Run as root: sudo bash $0"; exit 1; }
-
-REPO="$(cd "$(dirname "$0")" && pwd)"
-SWAP_SIZE=16G   # match or exceed your RAM for full hibernation
 
 # ── Disk selection ────────────────────────────────────────────────────────────
 echo ""
 echo "Available disks:"
-lsblk -d -o NAME,SIZE,MODEL | grep -v "loop"
+lsblk -d -o NAME,SIZE,MODEL | grep -v loop
 echo ""
-read -rp "Target disk [nvme0n1]: " DISK_INPUT
+read -rp "Target disk [nvme0n1]: " INPUT
+INPUT="${INPUT:-nvme0n1}"
+INPUT="${INPUT#/dev/}"
+[[ "$INPUT" =~ ^[a-zA-Z0-9._-]+$ ]] || { echo "Invalid disk name: $INPUT"; exit 1; }
+DISK="/dev/$INPUT"
+[[ -b "$DISK" ]] || { echo "Not a block device: $DISK"; exit 1; }
 
-# Strip /dev/ prefix if the user typed a full path (e.g. /dev/sda → sda)
-DISK_INPUT="${DISK_INPUT:-nvme0n1}"
-DISK_INPUT="${DISK_INPUT#/dev/}"
-
-# Validate: only safe characters, no path traversal
-[[ "$DISK_INPUT" =~ ^[a-zA-Z0-9._-]+$ ]] \
-  || { echo "Invalid disk name: $DISK_INPUT"; exit 1; }
-
-DISK="/dev/$DISK_INPUT"
-
-# Verify it is actually a block device before doing anything destructive
-[[ -b "$DISK" ]] || { echo "Not a block device: $DISK  (check lsblk)"; exit 1; }
+[[ "$DISK" =~ nvme ]] && PART="${DISK}p" || PART="$DISK"
+EFI="${PART}1"
+LUKS="${PART}2"
 
 echo ""
-echo "  Will wipe and install to: $DISK"
-echo "  Swap size:  $SWAP_SIZE"
-echo "  Config:     $REPO"
+echo "  Disk:  $DISK"
+echo "  EFI:   $EFI  (1G, FAT32, /boot)"
+echo "  LUKS:  $LUKS  (rest, LUKS2 → BTRFS)"
 echo ""
-read -rp "Type YES to continue: " CONFIRM
+read -rp "Type YES to wipe $DISK and continue: " CONFIRM
 [[ $CONFIRM == "YES" ]] || { echo "Aborted."; exit 1; }
 
-# Patch disko.nix with the chosen disk (DISK_INPUT is already validated safe)
-sed -i "s|device = \"/dev/[^\"]*\";|device = \"$DISK\";|" "$REPO/disko.nix"
-
-# ── Step 1: disko (partition, encrypt, format, mount) ────────────────────────
+# ── 1. Partition ──────────────────────────────────────────────────────────────
 echo ""
-echo "==> [1/6] Running disko..."
-# disko is not a flake input here; pin it by adding it to flake.nix inputs if
-# reproducibility matters. For now the ISO-time nix run uses the nixpkgs cache.
-nix --extra-experimental-features 'nix-command flakes' run \
-  github:nix-community/disko -- --mode disko "$REPO/disko.nix"
+echo "==> [1/7] Partitioning $DISK..."
+sgdisk -Z "$DISK"
+sgdisk -n 1:0:+1G -t 1:ef00 -c 1:ESP  "$DISK"
+sgdisk -n 2:0:0   -t 2:8309 -c 2:luks "$DISK"
+partprobe "$DISK"
+sleep 1
 
-# ── Step 2: Hardware config (must match THIS machine) ────────────────────────
+# ── 2. EFI ────────────────────────────────────────────────────────────────────
 echo ""
-echo "==> [2/6] Regenerating hardware-configuration.nix..."
-nixos-generate-config --no-filesystems --root /mnt
-cp /mnt/etc/nixos/hardware-configuration.nix \
-   "$REPO/hosts/nixos/hardware-configuration.nix"
+echo "==> [2/7] Formatting EFI..."
+mkfs.vfat -F 32 -n boot "$EFI"
 
-# ── Step 3: Swapfile ─────────────────────────────────────────────────────────
+# ── 3. LUKS ───────────────────────────────────────────────────────────────────
 echo ""
-echo "==> [3/6] Creating swapfile ($SWAP_SIZE)..."
-btrfs filesystem mkswapfile --size "$SWAP_SIZE" /mnt/swap/swapfile
+echo "==> [3/7] Setting up LUKS2 (enter your disk passphrase when prompted)..."
+cryptsetup luksFormat --type luks2 "$LUKS"
+cryptsetup open --allow-discards \
+  --perf-no_read_workqueue --perf-no_write_workqueue \
+  "$LUKS" cryptroot
 
-# ── Step 4: Compute resume offset and patch disks.nix ────────────────────────
+# ── 4. BTRFS + subvolumes ─────────────────────────────────────────────────────
 echo ""
-echo "==> [4/6] Computing hibernation resume offset..."
-# || true: tolerate btrfs failure so set -e doesn't abort before the fallback.
-# /physical/ matches "physical start:" across btrfs-progs versions.
+echo "==> [4/7] Creating BTRFS and subvolumes..."
+mkfs.btrfs -L nixos -f /dev/mapper/cryptroot
+mount /dev/mapper/cryptroot /mnt
+
+for sv in @ @home @nix @log @cache @tmp @snapshots @persist @swap; do
+  btrfs subvolume create "/mnt/$sv"
+done
+# nodatacow required for swapfile and recommended for logs/cache/tmp
+chattr +C /mnt/@log /mnt/@cache /mnt/@tmp /mnt/@swap
+umount /mnt
+
+# ── 5. Mount ──────────────────────────────────────────────────────────────────
+echo ""
+echo "==> [5/7] Mounting subvolumes to /mnt..."
+BASE="noatime,space_cache=v2,ssd,discard=async"
+mount -o "subvol=@,$BASE,compress=zstd:3"          /dev/mapper/cryptroot /mnt
+mkdir -p /mnt/{boot,home,nix,var/log,var/cache,tmp,.snapshots,persist,swap}
+mount "$EFI" /mnt/boot
+mount -o "subvol=@home,$BASE,compress=zstd:3"      /dev/mapper/cryptroot /mnt/home
+mount -o "subvol=@nix,$BASE,compress=zstd:1"       /dev/mapper/cryptroot /mnt/nix
+mount -o "subvol=@log,$BASE,nodatacow"             /dev/mapper/cryptroot /mnt/var/log
+mount -o "subvol=@cache,$BASE,nodatacow"           /dev/mapper/cryptroot /mnt/var/cache
+mount -o "subvol=@tmp,$BASE,nodatacow"             /dev/mapper/cryptroot /mnt/tmp
+mount -o "subvol=@snapshots,$BASE,compress=zstd:3" /dev/mapper/cryptroot /mnt/.snapshots
+mount -o "subvol=@persist,$BASE,compress=zstd:3"   /dev/mapper/cryptroot /mnt/persist
+mount -o "subvol=@swap,$BASE,nodatacow"            /dev/mapper/cryptroot /mnt/swap
+
+# ── 6. Swapfile ───────────────────────────────────────────────────────────────
+echo ""
+echo "==> [6/7] Creating 16G swapfile..."
+btrfs filesystem mkswapfile --size 16G /mnt/swap/swapfile
+
+# Get resume offset now while we still have the installer context
 OFFSET=$(btrfs inspect-internal map-swapfile -r /mnt/swap/swapfile 2>/dev/null \
   | awk '/physical/{print $NF}') || true
 
-if [[ "$OFFSET" =~ ^[0-9]+$ ]]; then
-  echo "    resume_offset = $OFFSET"
-  sed -i \
-    -e "/# boot\.resumeDevice/s/^  # /  /" \
-    -e "/# boot\.kernelParams = \[/s/^  # /  /" \
-    -e "s/REPLACE_WITH_ACTUAL_OFFSET/$OFFSET/" \
-    "$REPO/modules/nixos/disks.nix"
-else
-  echo "    WARNING: could not determine resume_offset (got: '${OFFSET:-empty}')"
-  echo "    Hibernation left disabled. Enable manually after install:"
-  echo "      sudo btrfs inspect-internal map-swapfile -r /swap/swapfile"
-  echo "    Then uncomment the two boot.resumeDevice / boot.kernelParams lines"
-  echo "    in modules/nixos/disks.nix and nixos-rebuild switch."
+# ── 7. Generate config + install ─────────────────────────────────────────────
+echo ""
+echo "==> [7/7] Generating hardware config and running nixos-install..."
+echo "    (You will be prompted to set the ROOT password)"
+echo ""
+nixos-generate-config --root /mnt
+
+# Force vmd into kernelModules so NVMe is visible in initrd on Intel VMD laptops.
+# nixos-generate-config puts it in availableKernelModules (load-on-detect) but
+# the NVMe isn't detectable until after vmd loads — kernelModules forces it first.
+HW=/mnt/etc/nixos/hardware-configuration.nix
+if grep -q '"vmd"' "$HW"; then
+  sed -i 's/boot\.initrd\.kernelModules\s*=\s*\[/boot.initrd.kernelModules = [ "vmd" /' "$HW" \
+    || echo "  Note: manually add vmd to boot.initrd.kernelModules if first boot shows luks timeout"
 fi
 
-# ── Step 5: Copy repo to installed system ────────────────────────────────────
-echo ""
-echo "==> [5/6] Copying config to /mnt/home/phatle/nixos-config..."
-mkdir -p /mnt/home/phatle
-# Remove any previous partial copy so cp is idempotent on reruns
-rm -rf /mnt/home/phatle/nixos-config
-cp -r "$REPO" /mnt/home/phatle/nixos-config
-
-# ── Step 6: Install ──────────────────────────────────────────────────────────
-echo ""
-echo "==> [6/6] Installing NixOS..."
-nixos-install \
-  --flake /mnt/home/phatle/nixos-config#nixos \
-  --no-root-passwd
+nixos-install --root /mnt
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 echo ""
-echo "=============================="
+echo "============================================================"
 echo "  Install complete!"
-echo "  After reboot: LUKS passphrase prompt → SDDM"
-echo "  Then: sudo chown -R phatle:users ~/nixos-config"
-echo "=============================="
+echo ""
+echo "  After reboot, log in as ROOT and run these commands:"
+echo ""
+echo "  1. Clone config:"
+echo "       nix-shell -p git --run \\"
+echo "         'git clone https://github.com/ThePhatLeee/nixos-config ~/nixos-config'"
+echo ""
+echo "  2. Copy hardware config (without filesystem UUIDs — the flake manages those):"
+echo "       nixos-generate-config --no-filesystems"
+echo "       cp /etc/nixos/hardware-configuration.nix \\"
+echo "          ~/nixos-config/hosts/nixos/hardware-configuration.nix"
+echo ""
+if [[ "$OFFSET" =~ ^[0-9]+$ ]]; then
+echo "  3. Enable hibernation (resume_offset = $OFFSET):"
+echo "       Edit ~/nixos-config/modules/nixos/disks.nix"
+echo "       Uncomment boot.resumeDevice and boot.kernelParams lines"
+echo "       Set resume_offset=$OFFSET"
+echo ""
+else
+echo "  3. Enable hibernation (optional):"
+echo "       btrfs inspect-internal map-swapfile -r /swap/swapfile"
+echo "       Edit ~/nixos-config/modules/nixos/disks.nix"
+echo "       Uncomment the two lines and set the printed offset"
+echo ""
+fi
+echo "  4. Switch to flake config:"
+echo "       sudo nixos-rebuild switch --flake ~/nixos-config#nixos"
+echo ""
+echo "  5. Set user password (phatle account is created by the flake):"
+echo "       passwd phatle"
+echo ""
+echo "  SDDM will start automatically after step 4."
+echo "  Login: phatle / nixos  (change immediately with passwd)"
+echo "============================================================"
 echo ""
 read -rp "Reboot now? [Y/n]: " REBOOT
 [[ ${REBOOT:-Y} =~ ^[Yy]$ ]] && reboot
