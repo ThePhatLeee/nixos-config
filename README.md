@@ -61,23 +61,38 @@ nixos-config/
 
 ## Fresh install from ISO
 
-Boot the NixOS ISO, then run **3 commands** — the install script handles everything else:
+Boot the NixOS ISO. The script handles the painful disk part — you do the rest.
 
 ```bash
-# 1. Get git and clone
-nix-shell -p git --run "git clone https://github.com/ThePhatLeee/nixos-config /tmp/nixos-config"
+# 1. Run the disk setup script (prompts for disk, does partition/LUKS/BTRFS/mount/swap)
+sudo bash <(curl -sL https://raw.githubusercontent.com/ThePhatLeee/nixos-config/main/install.sh)
+# — OR — boot with a USB copy of the repo and run: sudo bash /path/to/install.sh
 
-# 2. Run the install script  (prompts for disk, then fully automated)
-sudo bash /tmp/nixos-config/install.sh
+# 2. Clone config (script prints this as step 1 of its output)
+nix-shell -p git --run \
+  "git clone https://github.com/ThePhatLeee/nixos-config /tmp/nixos-config"
 
-# 3. Reboot when prompted
+# 3. Copy generated hardware config into the repo
+cp /mnt/etc/nixos/hardware-configuration.nix \
+   /tmp/nixos-config/hosts/nixos/hardware-configuration.nix
+
+# 4. (Optional) Enable hibernation — edit modules/nixos/disks.nix,
+#    uncomment the two boot.resumeDevice / boot.kernelParams lines,
+#    paste the resume_offset the script printed.
+
+# 5. Install
+mkdir -p /mnt/home/phatle
+cp -r /tmp/nixos-config /mnt/home/phatle/nixos-config
+nixos-install --flake /mnt/home/phatle/nixos-config#nixos --no-root-passwd
+
+# 6. Reboot — LUKS prompt → SDDM login: phatle / nixos
+#    Then immediately: passwd
 ```
 
-The script does in order: disko → hardware-config regeneration → swapfile → resume offset → copy → nixos-install.
-
-After first login, fix ownership and optionally enroll TPM2 auto-unlock (see `modules/nixos/tpm.nix`):
+After first login:
 ```bash
 sudo chown -R phatle:users ~/nixos-config
+passwd   # change the default password
 ```
 
 ## First-time setup
