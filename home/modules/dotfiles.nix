@@ -9,6 +9,7 @@ in {
   home.file = {
     ".config/hypr".source  = link "${dotfiles}/hypr";
     ".config/kitty".source = link "${dotfiles}/kitty";
+    ".claude".source       = link "${dotfiles}/claude";
     # noctalia is managed by programs.noctalia-shell (HM module owns ~/.config/noctalia)
   };
 }
