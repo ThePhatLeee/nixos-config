@@ -7,7 +7,9 @@
   # Always run the latest kernel
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # Silent boot — clean tty on startup
+  # Silent boot — clean tty on startup.
+  # No "splash" here: Plymouth is not enabled, and "splash" without it blacks out
+  # the framebuffer so the LUKS passphrase prompt never becomes visible.
   boot.consoleLogLevel = 3;
-  boot.kernelParams = [ "quiet" "splash" "loglevel=3" ];
+  boot.kernelParams = [ "quiet" "loglevel=3" ];
 }
