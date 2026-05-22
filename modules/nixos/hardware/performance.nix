@@ -50,9 +50,17 @@
     # Disable proactive compaction — it causes latency spikes on desktop
     "vm.compaction_proactiveness"   = 0;
 
+    # ── Scheduler ────────────────────────────────────────────────────
+    # Raise migration cost — reduces task bouncing between cores on desktop
+    "kernel.sched_migration_cost_ns"     = 5000000;
+    # Reduce vmstat polling — saves ~0.5% CPU on idle desktop
+    "vm.stat_interval"                   = 10;
+
     # ── Network extras ────────────────────────────────────────────────
     # TCP Fast Open: send data on SYN (client+server) — reduces RTT for repeat connections
     "net.ipv4.tcp_fastopen"              = 3;
+    # Reduce TCP buffer bloat — don't buffer more than 16KB of unsent data
+    "net.ipv4.tcp_notsent_lowat"         = 16384;
     # PLPMTUD: probe for optimal MTU on lossy paths instead of assuming 1500
     "net.ipv4.tcp_mtu_probing"           = 1;
     # Larger NIC receive queue — prevents drops under bursty traffic

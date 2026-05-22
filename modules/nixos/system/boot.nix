@@ -31,4 +31,8 @@
 
   boot.tmp.useTmpfs  = true;
   boot.tmp.tmpfsSize = "4G";
+
+  # zstd decompresses ~3× faster than gzip — noticeably shorter initrd load time
+  boot.initrd.compressor     = "zstd";
+  boot.initrd.compressorArgs = [ "-19" "-T0" ];
 }

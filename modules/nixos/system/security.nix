@@ -67,6 +67,15 @@ in
 
     # Mount/unmount
     "-a always,exit -F arch=b64 -S mount -S umount2 -k mount_ops"
+
+    # Boot partition writes
+    "-w /boot -p wa -k boot_write"
+
+    # SSH authorized keys changes
+    "-w /home/phatle/.ssh/authorized_keys -p wa -k ssh_keys"
+
+    # Hosts file changes
+    "-w /etc/hosts -p wa -k hosts_change"
   ];
 
   environment.systemPackages = [ pkgs.lynis ];
@@ -120,6 +129,13 @@ in
 
     # ── Full ASLR ─────────────────────────────────────────────────────────
     "kernel.randomize_va_space" = 2;
+
+    # ── BPF hardening ─────────────────────────────────────────────────────
+    "kernel.unprivileged_bpf_disabled" = 1;  # no unprivileged BPF programs
+    "net.core.bpf_jit_harden"          = 2;  # harden JIT against pointer leaks
+
+    # ── Prevent runtime kernel replacement ────────────────────────────────
+    "kernel.kexec_load_disabled" = 1;
   };
 
   # On kernel 7.x, audit_backlog_limit, failure mode (-f), rate (-r), and

@@ -44,10 +44,21 @@
 
       # ── SATA link power ───────────────────────────────────────────────
       SATA_LINKPWR_ON_BAT = "med_power_with_dipm";
+      DISK_APM_LEVEL_ON_BAT = 128;
 
       # ── Audio power saving ────────────────────────────────────────────
       SOUND_POWER_SAVE_ON_BAT      = 1;
       SOUND_POWER_SAVE_CONTROLLER  = "Y";
+
+      # ── Sleep + performance cap ───────────────────────────────────────
+      # deep: S3 suspend — significantly better battery than s2idle
+      MEM_SLEEP_ON_BAT           = "deep";
+      MEM_SLEEP_ON_AC            = "s2idle";
+      # Cap CPU at 60% on battery — responsive but conserves power
+      CPU_MAX_PERF_ON_BAT        = 60;
+      CPU_MIN_PERF_ON_BAT        = 0;
+      # Re-apply charge thresholds after hot-unplug/re-plug of AC
+      RESTORE_THRESHOLDS_ON_BAT  = 1;
     };
   };
 

@@ -28,7 +28,7 @@
   services.btrfs.autoScrub = {
     enable      = true;
     interval    = "monthly";
-    fileSystems = [ "/" ];
+    fileSystems = [ "/" "/home" ];
   };
 
   # Periodic balance — prevents metadata fragmentation on single-disk BTRFS over time.
