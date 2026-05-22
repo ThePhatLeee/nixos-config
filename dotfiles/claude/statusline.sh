@@ -95,7 +95,7 @@ fi
 badge=""
 if [ -n "$vim_mode" ]; then
   case "$vim_mode" in
-    INSERT)  badge=" ${F_GRN}I${F_DARK}" ;;
+    INSERT)  badge="" ;;
     NORMAL)  badge=" ${F_ACC}N${F_DARK}" ;;
     VISUAL*) badge=" ${F_YLW}V${F_DARK}" ;;
     *)       badge=" ${F_DIM}${vim_mode}${F_DARK}" ;;
