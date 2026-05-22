@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
-# Claude Code statusline — Tokyo Night starship palette
-# Segments: #a3aed2 → #769ff0 → #394260 → #212736 → #1d2230
+# Claude Code statusline — Compline/Noctalia palette
+# Segments: #515761 → #3d424a → #282c34 → #22262b → #1a1d21
 
 R='\e[0m'
 
-B1='\e[48;2;163;174;210m'      # #a3aed2
-B2='\e[48;2;118;159;240m'      # #769ff0
-B3='\e[48;2;57;66;96m'         # #394260
-BL='\e[48;2;33;39;54m'         # #212736
-B4='\e[48;2;29;34;48m'         # #1d2230
+B1='\e[48;2;81;87;97m'         # #515761
+B2='\e[48;2;61;66;74m'         # #3d424a
+B3='\e[48;2;40;44;52m'         # #282c34
+BL='\e[48;2;34;38;43m'         # #22262b
+B4='\e[48;2;26;29;33m'         # #1a1d21
 
-F_DARK='\e[38;2;9;12;12m'
-F_LIGHT='\e[38;2;227;229;229m'
-F_DIM='\e[38;2;163;174;210m'
-F_PRI='\e[38;2;118;159;240m'
-F_MID='\e[38;2;57;66;96m'
-F_LNG='\e[38;2;33;39;54m'
-F_SRF='\e[38;2;29;34;48m'
-F_MUTED='\e[38;2;160;169;203m'
+F_DARK='\e[38;2;26;29;33m'     # #1a1d21  dark fg on Seg1
+F_LIGHT='\e[38;2;240;239;235m' # #f0efeb  bright fg on dir
+F_DIM='\e[38;2;81;87;97m'      # #515761 = B1  (░▒▓ + Seg1→2 arrow)
+F_PRI='\e[38;2;61;66;74m'      # #3d424a = B2  (Seg2→3 arrow only)
+F_ACC='\e[38;2;180;188;196m'   # #b4bcc4  accent text (git, stack, vim normal)
+F_MID='\e[38;2;40;44;52m'      # #282c34 = B3  (Seg3→4 arrow)
+F_LNG='\e[38;2;34;38;43m'      # #22262b = BL  (Seg4→5 arrow)
+F_SRF='\e[38;2;26;29;33m'      # #1a1d21 = B4  (trailing arrow)
+F_MUTED='\e[38;2;81;87;97m'    # #515761  muted text
 F_GRN='\e[38;2;155;254;206m'
 F_YLW='\e[38;2;255;245;155m'
 F_RED='\e[38;2;253;70;99m'
@@ -95,7 +96,7 @@ badge=""
 if [ -n "$vim_mode" ]; then
   case "$vim_mode" in
     INSERT)  badge=" ${F_GRN}I${F_DARK}" ;;
-    NORMAL)  badge=" ${F_PRI}N${F_DARK}" ;;
+    NORMAL)  badge=" ${F_ACC}N${F_DARK}" ;;
     VISUAL*) badge=" ${F_YLW}V${F_DARK}" ;;
     *)       badge=" ${F_DIM}${vim_mode}${F_DARK}" ;;
   esac
@@ -127,7 +128,7 @@ if [ -n "$used_pct" ]; then
   used_int=$(printf '%.0f' "$used_pct")
   if   [ "$used_int" -ge 85 ]; then cc="$F_RED"
   elif [ "$used_int" -ge 60 ]; then cc="$F_YLW"
-  else                               cc="$F_PRI"
+  else                               cc="$F_ACC"
   fi
   ctx_info="${F_MUTED}context ${cc}${used_int}%"
 fi
@@ -173,16 +174,16 @@ out+="${F_LIGHT}  ${short_cwd} ${R}"
 if [ -n "$branch" ]; then
   # → #394260
   out+="${B3}${F_PRI}${A}"
-  # Seg3 — #394260: branch icon + name + flags
-  out+="${F_PRI} ${I_BRANCH} ${branch}${git_flags:+ ${git_flags}} ${R}"
+  # Seg3 — #282c34: branch icon + name + flags
+  out+="${F_ACC} ${I_BRANCH} ${branch}${git_flags:+ ${git_flags}} ${R}"
   # → #212736
   out+="${BL}${F_MID}${A}"
 else
   out+="${BL}${F_PRI}${A}"
 fi
 
-# Seg4 — #212736: stack icons + model (mirrors starship language seg)
-out+="${F_PRI} ${stack}${F_MUTED}${model_label:-claude} ${R}"
+# Seg4 — #22262b: stack icons + model (mirrors starship language seg)
+out+="${F_ACC} ${stack}${F_MUTED}${model_label:-claude} ${R}"
 
 # → #1d2230
 out+="${B4}${F_LNG}${A}"
