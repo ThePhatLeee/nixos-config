@@ -1,6 +1,8 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
+  environment.systemPackages = [ pkgs.ssh-to-age pkgs.age ];
+
   sops = {
     # Age key for system-level secret decryption
     # Generate: age-keygen -o /var/lib/sops-nix/key.txt
