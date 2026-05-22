@@ -2,11 +2,12 @@
 
 {
   imports = [
+    inputs.nix-index-database.homeModules.nix-index
     ../modules/dotfiles.nix
-    ../modules/hypr.nix
-    ../modules/noctalia.nix
-    ../modules/packages.nix
-    ../modules/apps/kitty.nix
+    ../modules/shell.nix
+    ../modules/apps
+    ../modules/cli
+    ../modules/dev
   ];
 
   home.username    = "phatle";

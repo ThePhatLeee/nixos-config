@@ -1,13 +1,8 @@
 -- ── Monitors ──────────────────────────────────────────────────────────
+-- Static startup config. Kanshi overrides at runtime for docked/undocked profiles.
 
--- Auto-detect all monitors (preferred resolution, automatic position, auto scale)
-hl.monitor({
-    output   = "",
-    mode     = "preferred",
-    position = "auto",
-    scale    = "auto",
-})
+-- Internal 4K panel — explicit 1.2 scale; auto would pick 2.0
+hl.monitor({ output = "eDP-1", mode = "3456x2160@60", position = "0x0", scale = 1.2 })
 
--- Examples — uncomment and adjust for manual configuration:
--- hl.monitor({ output = "eDP-1",    mode = "2560x1600@165", position = "0x0",    scale = 1.6 })
--- hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@60",  position = "2560x0", scale = 1   })
+-- Catch-all for any connected external monitor
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })

@@ -2,10 +2,10 @@
 -- Source command is:
 -- dofile(os.getenv("HOME") .. "/.config/hypr/noctalia/noctalia-colors.lua")
 
-local primary = "rgb(fff59b)"
-local surface = "rgb(070722)"
-local secondary = "rgb(a9aefe)"
-local error = "rgb(fd4663)"
+local primary = "rgb(b4bcc4)"
+local surface = "rgb(1a1d21)"
+local secondary = "rgb(b4bcc4)"
+local error = "rgb(cdacac)"
 
 hl.config({
 	general = {

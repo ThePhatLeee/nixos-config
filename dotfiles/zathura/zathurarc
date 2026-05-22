@@ -1,0 +1,43 @@
+# ── Behaviour ─────────────────────────────────────────────────────────
+set selection-clipboard clipboard
+set adjust-open "best-fit"
+set pages-per-row 1
+set scroll-page-aware true
+set smooth-scroll true
+set scroll-full-overlap 0.1
+set zoom-min 10
+
+# ── UI ────────────────────────────────────────────────────────────────
+set guioptions ""
+set font "JetBrainsMono Nerd Font 11"
+set statusbar-h-padding 10
+set statusbar-v-padding 5
+
+# ── Dark theme (Catppuccin-style) ─────────────────────────────────────
+set default-bg                  "#1e1e2e"
+set default-fg                  "#cdd6f4"
+set statusbar-bg                "#313244"
+set statusbar-fg                "#cdd6f4"
+set inputbar-bg                 "#313244"
+set inputbar-fg                 "#cdd6f4"
+set notification-bg             "#313244"
+set notification-fg             "#cdd6f4"
+set notification-error-bg       "#f38ba8"
+set notification-error-fg       "#1e1e2e"
+set notification-warning-bg     "#fab387"
+set notification-warning-fg     "#1e1e2e"
+set highlight-color             "#f5c2e7"
+set highlight-active-color      "#cba6f7"
+set completion-bg               "#313244"
+set completion-fg               "#cdd6f4"
+set completion-highlight-bg     "#cba6f7"
+set completion-highlight-fg     "#1e1e2e"
+set recolor-lightcolor          "#1e1e2e"
+set recolor-darkcolor           "#cdd6f4"
+
+# ── Keybinds (vim-style) ──────────────────────────────────────────────
+map <C-r> recolor
+map [normal] d scroll half-down
+map [normal] u scroll half-up
+map [normal] D navigate next
+map [normal] U navigate previous

@@ -4,21 +4,20 @@
   imports = [
     ./hardware-configuration.nix
 
-    ../../modules/nixos/disks.nix   # LUKS2 + BTRFS filesystems (post-LUKS install)
-    ../../modules/nixos/boot.nix
-    ../../modules/nixos/locale.nix
-    ../../modules/nixos/networking.nix
-    ../../modules/nixos/audio.nix
-    ../../modules/nixos/bluetooth.nix
-    ../../modules/nixos/hyprland.nix
-    ../../modules/nixos/fonts.nix
-    ../../modules/nixos/nix-settings.nix
-    ../../modules/nixos/nix-tools.nix
-    ../../modules/nixos/sddm.nix
-    ../../modules/nixos/users.nix
+    # Dell XPS 15 9510 — base laptop (WiFi fix, thermald, TLP, Intel iGPU, SSD TRIM)
+    inputs.nixos-hardware.nixosModules.dell-xps-15-9510
+    # Dell XPS 15 9510 — NVIDIA PRIME offload + open Ampere drivers
+    inputs.nixos-hardware.nixosModules.dell-xps-15-9510-nvidia
+
+    ../../modules/nixos/system
+    ../../modules/nixos/hardware
+    ../../modules/nixos/desktop
+    ../../modules/nixos/nix
   ];
 
   networking.hostName = "nixos";
+
+  programs.zsh.enable = true;
 
   system.stateVersion = "25.11";
 }

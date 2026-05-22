@@ -25,12 +25,11 @@ hl.window_rule({ name = "pip-float",  match = { title = "Picture-in-Picture" }, 
 hl.window_rule({ name = "pip-ratio",  match = { title = "Picture-in-Picture" }, keep_aspect_ratio = true })
 hl.window_rule({ name = "pip-pin",    match = { title = "Picture-in-Picture" }, pin = true })
 
--- Hyprlock
-hl.window_rule({ name = "hyprlock-fs",  match = { class = "hyprlock" }, fullscreen = true })
-
--- Blueman
-hl.window_rule({ name = "blueman-float",  match = { class = "blueman-manager" }, float  = true })
-hl.window_rule({ name = "blueman-center", match = { class = "blueman-manager" }, center = true })
-
 -- Nautilus property dialogs
 hl.window_rule({ name = "nautilus-props", match = { class = "org.gnome.Nautilus", title = "Properties" }, float = true })
+
+-- Workspace assignments (silent = no focus steal on open)
+hl.window_rule({ name = "ws1-vscode",      match = { class = "Code"        }, workspace = "1 silent" })
+hl.window_rule({ name = "ws2-firefox",     match = { class = "firefox"     }, workspace = "2 silent" })
+hl.window_rule({ name = "ws4-thunderbird", match = { class = "thunderbird"  }, workspace = "4 silent" })
+hl.window_rule({ name = "ws5-signal",      match = { class = "Signal"      }, workspace = "5 silent" })

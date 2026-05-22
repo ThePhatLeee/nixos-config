@@ -1,0 +1,13 @@
+creation_rules:
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - pgp:
+          # ThePhatLe dev key (thephatle@proton.me)
+          - BFC6E2CF1A75CF948DB7976109D801B2351193B1
+          # Secrets encryption key (jokinenmarko1@gmail.com)
+          - 7C4E19872E2BFC518DBD1F4FE4F558182A1278F2
+        age:
+          # System age key — run after rebuild:
+          # sudo ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key | sudo tee /var/lib/sops-nix/key.txt
+          # Then add the public key here: age-keygen -y /var/lib/sops-nix/key.txt
+          - REPLACE_WITH_AGE_PUBLIC_KEY_AFTER_REBUILD

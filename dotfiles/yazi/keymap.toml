@@ -1,0 +1,58 @@
+[manager]
+keymap = [
+  { on = "<Esc>", run = "escape",             desc = "Exit visual mode / clear filter" },
+  { on = "q",     run = "quit",               desc = "Quit" },
+  { on = "Q",     run = "quit --no-cwd-file", desc = "Quit without CWD" },
+
+  # Navigation
+  { on = "k", run = "arrow -1",  desc = "Up" },
+  { on = "j", run = "arrow 1",   desc = "Down" },
+  { on = "K", run = "arrow -5",  desc = "Up 5" },
+  { on = "J", run = "arrow 5",   desc = "Down 5" },
+  { on = "h", run = "leave",     desc = "Parent dir" },
+  { on = "l", run = "enter",     desc = "Enter dir / open" },
+  { on = "H", run = "back",      desc = "History back" },
+  { on = "L", run = "forward",   desc = "History forward" },
+
+  { on = "g", run = "arrow top",    desc = "Top" },
+  { on = "G", run = "arrow bottom", desc = "Bottom" },
+
+  # Selection
+  { on = "<Space>", run = ["select --state=none", "arrow 1"], desc = "Toggle select" },
+  { on = "v",       run = "visual_mode",                      desc = "Visual mode" },
+  { on = "V",       run = "visual_mode --unset",              desc = "Visual mode (unset)" },
+  { on = "a",       run = "select_all --state=true",          desc = "Select all" },
+  { on = "A",       run = "select_all --state=false",         desc = "Deselect all" },
+
+  # Operations
+  { on = "o",     run = "open",                                  desc = "Open" },
+  { on = "O",     run = "open --interactive",                    desc = "Open interactive" },
+  { on = "r",     run = "rename --cursor=before_ext",            desc = "Rename" },
+  { on = "d",     run = "trash",                                  desc = "Trash" },
+  { on = "D",     run = "delete",                                 desc = "Delete permanently" },
+  { on = "y",     run = "yank",                                   desc = "Yank (copy)" },
+  { on = "x",     run = "yank --cut",                             desc = "Yank (cut)" },
+  { on = "p",     run = "paste",                                  desc = "Paste" },
+  { on = "P",     run = "paste --force",                          desc = "Paste (overwrite)" },
+  { on = "c",     run = "copy path",                              desc = "Copy path" },
+  { on = "n",     run = "create",                                 desc = "New file/dir" },
+  { on = ".",     run = "hidden toggle",                          desc = "Toggle hidden" },
+
+  # Search
+  { on = "/", run = "find --smart",    desc = "Find (smart case)" },
+  { on = "f", run = "filter --smart",  desc = "Filter" },
+  { on = "z", run = "plugin zoxide",   desc = "Zoxide jump" },
+  { on = "Z", run = "plugin fzf",      desc = "Fzf jump" },
+
+  # Shell
+  { on = "!", run = "shell --block",   desc = "Shell (block)" },
+  { on = "~", run = "shell",           desc = "Shell" },
+
+  # Tabs
+  { on = "t",  run = "tab_create --current", desc = "New tab" },
+  { on = "1",  run = "tab_switch 0",         desc = "Tab 1" },
+  { on = "2",  run = "tab_switch 1",         desc = "Tab 2" },
+  { on = "3",  run = "tab_switch 2",         desc = "Tab 3" },
+  { on = "[",  run = "tab_switch -1 --relative", desc = "Prev tab" },
+  { on = "]",  run = "tab_switch 1 --relative",  desc = "Next tab" },
+]

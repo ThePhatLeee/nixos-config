@@ -1,5 +1,10 @@
 -- ── Appearance ────────────────────────────────────────────────────────
 
+-- Blur Noctalia bar and panels
+hl.layer_rule({ name = "noctalia-blur",        match = { namespace = "noctalia-background-" }, blur         = true })
+hl.layer_rule({ name = "noctalia-blur-popups", match = { namespace = "noctalia-background-" }, blur_popups  = true })
+hl.layer_rule({ name = "noctalia-ignorealpha", match = { namespace = "noctalia-background-" }, ignore_alpha = 0.5 })
+
 hl.config({
     decoration = {
         rounding       = 12,

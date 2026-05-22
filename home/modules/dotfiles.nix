@@ -7,8 +7,16 @@ in {
   # Symlink entire config directories straight from the repo.
   # Edit any file inside dotfiles/ and changes are live immediately — no rebuild.
   home.file = {
-    ".config/hypr".source  = link "${dotfiles}/hypr";
-    ".config/kitty".source = link "${dotfiles}/kitty";
-    # noctalia is managed by programs.noctalia-shell (HM module owns ~/.config/noctalia)
+    ".config/hypr".source          = link "${dotfiles}/hypr";
+    ".config/kitty".source         = link "${dotfiles}/kitty";
+    ".config/zellij".source                  = link "${dotfiles}/zellij";
+    ".config/starship.toml".source           = link "${dotfiles}/starship/starship.toml";
+    ".config/noctalia".source                = link "${dotfiles}/noctalia";
+    ".config/yazi".source                    = link "${dotfiles}/yazi";
+    ".config/zathura".source                 = link "${dotfiles}/zathura";
+    ".config/lazygit".source                 = link "${dotfiles}/lazygit";
+    ".config/btop".source                    = link "${dotfiles}/btop";
+    ".config/kanshi".source                  = link "${dotfiles}/kanshi";
+    ".claude".source                         = link "${dotfiles}/claude";
   };
 }

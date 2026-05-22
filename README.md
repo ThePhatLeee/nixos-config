@@ -1,141 +1,141 @@
 # nixos-config
 
-Modular NixOS configuration — Hyprland baseline.
+NixOS flake configuration for Dell XPS 15 9510 (i7-11800H + RTX 3050 Ti).  
+Hyprland · Noctalia · Pipewire · BTRFS+LUKS2 · Podman containers · KVM/QEMU.
 
-## Structure
+---
+
+## Architecture
+
+```
+HOST — hardened, minimal, no dev runtimes
+├── Containers (Podman rootless + distrobox — Ubuntu 24.04)
+│     frontend   --nvidia  Node.js · pnpm · bun · TS · Three.js
+│     backend              PHP · Python · Java · .NET · Go · Rust · C++ · DBs
+│     fullstack  --nvidia  frontend + backend combined
+│     it                   Ansible · networking tools · IT automation
+├── VMs (KVM/QEMU — virt-manager)
+│     Kali Linux — offensive security tooling
+│     Windows    — IT support · AD · RDP testing
+└── Host-only
+      Academic · creative · communication · recording
+      Git · GPG/SSH agent
+```
+
+---
+
+## Repo layout
 
 ```
 nixos-config/
-│
-├── flake.nix                        # Inputs: nixpkgs-unstable + home-manager
+├── flake.nix                         # inputs: nixpkgs-unstable, home-manager, nixos-hardware, noctalia
+├── disko.nix                         # disk layout (install-time only)
+├── install.sh                        # disko runner — see Install below
 │
 ├── hosts/nixos/
-│   ├── default.nix                  # Hostname, stateVersion, imports all modules
-│   └── hardware-configuration.nix   # Machine-specific hardware — committed, but regenerate for each new machine
+│   ├── default.nix                   # hostname, stateVersion, imports all module groups
+│   └── hardware-configuration.nix    # machine-specific — regenerate for new hardware
 │
-├── modules/nixos/                   # System-level NixOS modules
-│   ├── boot.nix                     # systemd-boot, latest kernel, quiet boot
-│   ├── networking.nix               # NetworkManager, firewall
-│   ├── audio.nix                    # Pipewire + wireplumber
-│   ├── bluetooth.nix                # Bluetooth + blueman
-│   ├── hyprland.nix                 # programs.hyprland, xdg-portal, wayland env vars
-│   ├── fonts.nix                    # Nerd Fonts, Inter, Noto, JetBrains Mono
-│   ├── nix-settings.nix             # Flakes, cachix, auto-GC
-│   └── users.nix                    # User + groups
+├── modules/nixos/
+│   ├── system/    audio · bluetooth · boot · containers · disks · locale
+│   │              networking · security · snapshots · ssh · usbguard
+│   │              users · virtualization · vpn
+│   │              tpm.nix            # deferred — Batch H (Secure Boot + TPM2)
+│   ├── hardware/  nvidia · performance · power · printing · xps · blender
+│   ├── desktop/   hyprland · sddm · fonts
+│   └── nix/       settings · tools
 │
 ├── home/
-│   ├── phatle/default.nix           # Home-manager root: cursor, GTK, imports modules
+│   ├── phatle/default.nix            # HM root: GTK, cursor, XDG, imports modules
 │   └── modules/
-│       ├── hypr.nix                 # HM hyprland enable + sources dotfiles/hypr/conf/
-│       ├── services.nix             # hyprlock, hypridle, hyprpaper (HM-managed)
-│       ├── waybar.nix               # Installs waybar, symlinks dotfiles/waybar/
-│       ├── packages.nix             # User packages
-│       └── apps/
-│           └── kitty.nix            # Installs kitty, symlinks dotfiles/kitty/
+│       ├── apps/   academic · creative · files · hyprland · kitty · media
+│       │           noctalia · recording · sync · vscode
+│       ├── cli/    git · monitor · utils · viewers
+│       ├── dev/    containers · gpg
+│       ├── shell.nix                 # zsh · eza · fzf · direnv · zellij · starship
+│       └── dotfiles.nix             # symlinks dotfiles/ → ~/.config/ (live edits)
 │
-└── dotfiles/                        # ← EDIT THESE — symlinked to ~/.config/
-    ├── hypr/conf/                   # Hyprland config (sourced directly from repo path)
-    │   ├── general.conf             # Layout, gaps, borders, $vars
-    │   ├── monitors.conf            # Monitor setup
-    │   ├── appearance.conf          # Rounding, blur, shadow
-    │   ├── animations.conf          # Bezier + animation timings
-    │   ├── input.conf               # Keyboard, touchpad, gestures
-    │   ├── keybinds.conf            # All key bindings
-    │   ├── windowrules.conf         # Window rules
-    │   └── autostart.conf           # exec-once entries
-    ├── kitty/
-    │   └── kitty.conf               # Symlinked to ~/.config/kitty/
-    └── waybar/
-        ├── config.jsonc             # Symlinked to ~/.config/waybar/
-        └── style.css
+└── dotfiles/                         # edit here — changes are instant, no rebuild
+    ├── hypr/                         # Hyprland config
+    ├── kitty/                        # terminal
+    ├── zellij/                       # multiplexer
+    ├── starship/                     # prompt
+    ├── noctalia/                     # desktop shell settings
+    ├── yazi/                         # file manager
+    ├── zathura/                      # PDF viewer
+    ├── lazygit/                      # git TUI
+    ├── zsh/extra.zsh                 # aliases, shell init
+    └── claude/                       # Claude Code config
 ```
 
-## How dotfiles work
+---
 
-| File | Where it ends up | How to apply changes |
-|---|---|---|
-| `dotfiles/hypr/conf/*.conf` | Sourced directly by Hyprland | `hyprctl reload` |
-| `dotfiles/kitty/kitty.conf` | `~/.config/kitty/` (symlink) | Reopen kitty |
-| `dotfiles/waybar/` | `~/.config/waybar/` (symlink) | `killall waybar; waybar &` |
-| Nix modules | System/home config | `sudo nixos-rebuild switch --flake ~/nixos-config#nixos` |
-
-## Fresh install from ISO
-
-Boot the NixOS ISO, then run **3 commands** — the install script handles everything else:
+## Apply changes
 
 ```bash
-# 1. Get git and clone
+nh os switch          # rebuild system + home (always fetches latest inputs)
+nh home switch        # home-manager only (faster, no sudo)
+nix flake check       # validate without building
+```
+
+Changes inside `dotfiles/` are live immediately — no rebuild needed.
+
+---
+
+## Install
+
+Boot the NixOS ISO, clone the repo, run the disko script, then install manually:
+
+```bash
+# 1. Clone (git available on the ISO)
 nix-shell -p git --run "git clone https://github.com/ThePhatLeee/nixos-config /tmp/nixos-config"
 
-# 2. Run the install script  (prompts for disk, then fully automated)
+# 2. Run disko — partitions, encrypts (LUKS2), formats BTRFS, mounts /mnt
+#    Also creates swapfile and prints the hibernation resume offset.
 sudo bash /tmp/nixos-config/install.sh
 
-# 3. Reboot when prompted
+# 3. Update resume offset in modules/nixos/system/disks.nix with the printed value
+#    (only needed if you want hibernation)
+
+# 4. Install NixOS
+nixos-install --flake /tmp/nixos-config#nixos --no-root-passwd
+
+# 5. Reboot
+reboot
 ```
 
-The script does in order: disko → hardware-config regeneration → swapfile → resume offset → copy → nixos-install.
+---
 
-After first login, fix ownership and optionally enroll TPM2 auto-unlock (see `modules/nixos/tpm.nix`):
-```bash
-sudo chown -R phatle:users ~/nixos-config
-```
+## Post-install
 
-## First-time setup
-
-```bash
-# 1. Enable flakes in current /etc/nixos config
-sudo sh -c 'echo "  nix.settings.experimental-features = [\"nix-command\" \"flakes\"];" >> /etc/nixos/configuration.nix'
-sudo nixos-rebuild switch
-
-# 2. Switch to flake config
-cd ~/nixos-config
-git init && git add .
-sudo nixos-rebuild switch --flake ~/nixos-config#nixos
-```
-
-Or just run:
-```bash
-bash ~/nixos-config/bootstrap.sh
-```
-
-## Ongoing usage
+After first login (LUKS passphrase → SDDM → desktop):
 
 ```bash
-# Rebuild after changing any .nix file
-sudo nixos-rebuild switch --flake ~/nixos-config#nixos
+# Clone the repo to its permanent location
+git clone https://github.com/ThePhatLeee/nixos-config ~/nixos-config
 
-# Test before switching (builds but doesn't activate)
-sudo nixos-rebuild build --flake ~/nixos-config#nixos
+# Set your password
+passwd
 
-# Roll back if something breaks
-sudo nixos-rebuild switch --rollback
+# Rebuild from the permanent location
+nh os switch
+
+# Import your GPG key
+gpg --import private-key.asc
 ```
 
-## Customize first
+For Secure Boot + TPM2 auto-unlock — see `modules/nixos/system/tpm.nix` (Batch H).  
+For distrobox containers — see `DISTROBOX_SETUP.md`.
 
-- [ ] `hosts/nixos/default.nix` — set `time.timeZone`
-- [ ] `dotfiles/hypr/conf/monitors.conf` — set your monitor
-- [ ] `dotfiles/hypr/conf/input.conf` — change `kb_layout` if not US
-- [ ] `home/modules/services.nix` — add wallpaper path in hyprpaper section
+---
 
-## Key bindings
+## Key packages
 
-| Key | Action |
+| Layer | Tools |
 |---|---|
-| `Super+Q` | Terminal (kitty) |
-| `Super+R` | Launcher (wofi) |
-| `Super+E` | Files (nautilus) |
-| `Super+C` | Close window |
-| `Super+V` | Toggle float |
-| `Super+F` | Fullscreen |
-| `Super+G` | Color picker |
-| `Print` | Screenshot (output) |
-| `Shift+Print` | Screenshot (region) |
-| `Super+Print` | Screenshot (window) |
-| `Super+H/L/K/J` | Focus direction |
-| `Super+Shift+H/L/K/J` | Move window |
-| `Super+Alt+H/L/K/J` | Resize window |
-| `Super+1–0` | Switch workspace |
-| `Super+Shift+1–0` | Move to workspace |
-| `Super+S` | Scratchpad |
-| `` Super+` `` | Clipboard history |
+| Shell | zsh · starship · zellij · eza · fzf · atuin · zoxide · bat |
+| CLI | ripgrep · fd · jq · lazygit · delta · btop · dust · duf · yazi |
+| Desktop | Hyprland · Noctalia · SDDM · Firefox · VSCode |
+| Creative | GIMP · Inkscape · Darktable · Blender (CUDA) · OBS · DaVinci Resolve |
+| Academic | LaTeX · Pandoc · Obsidian · Zotero · Anki |
+| System | Podman · virt-manager · snapper · AppArmor · fail2ban · earlyoom |
