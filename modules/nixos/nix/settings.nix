@@ -33,6 +33,16 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  # openldap i686 checkPhase is a flaky syncreplication timing test — skip it.
+  # Lutris pulls in openldap-i686; the binary is fine, the test suite is not sandbox-safe.
+  nixpkgs.overlays = [
+    (_: prev: {
+      pkgsi686Linux = prev.pkgsi686Linux.extend (_: p: {
+        openldap = p.openldap.overrideAttrs (_: { doCheck = false; });
+      });
+    })
+  ];
+
   # zram: compressed in-memory swap (primary, fast).
   # Swapfile on disk (/swap/swapfile) is the fallback + hibernation target.
   zramSwap = {

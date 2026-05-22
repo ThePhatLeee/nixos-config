@@ -2,7 +2,7 @@ creation_rules:
   - path_regex: secrets/.*\.yaml$
     key_groups:
       - pgp:
-          # ThePhatLe dev key (thephatle@proton.me)
+          # ThePhatLe dev key (phat.le@thephatle.dev)
           - BFC6E2CF1A75CF948DB7976109D801B2351193B1
           # Secrets encryption key (jokinenmarko1@gmail.com)
           - 7C4E19872E2BFC518DBD1F4FE4F558182A1278F2
