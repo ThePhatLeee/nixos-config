@@ -17,6 +17,7 @@ in {
     ".config/lazygit".source                 = link "${dotfiles}/lazygit";
     ".config/btop".source                    = link "${dotfiles}/btop";
     ".config/kanshi".source                  = link "${dotfiles}/kanshi";
+    ".config/easyeffects".source             = link "${dotfiles}/easyeffects";
     ".claude".source                         = link "${dotfiles}/claude";
   };
 }
