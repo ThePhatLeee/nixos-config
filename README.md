@@ -164,11 +164,12 @@ nh os switch
 hyprctl reload
 
 # sops-nix — derive age key from SSH host key
-sudo ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key | sudo tee /var/lib/sops-nix/key.txt
+sudo mkdir -p /var/lib/sops-nix
+sudo sh -c "nix run nixpkgs#ssh-to-age -- -private-key -i /etc/ssh/ssh_host_ed25519_key | tee /var/lib/sops-nix/key.txt"
 sudo chmod 600 /var/lib/sops-nix/key.txt
 
 # Get the age public key and paste it into .sops.yaml
-age-keygen -y /var/lib/sops-nix/key.txt
+nix shell nixpkgs#age -c age-keygen -y /var/lib/sops-nix/key.txt
 # → copy the age1... output
 # → edit .sops.yaml: replace REPLACE_WITH_AGE_PUBLIC_KEY_AFTER_REBUILD
 
