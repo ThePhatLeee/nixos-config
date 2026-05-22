@@ -10,4 +10,4 @@ creation_rules:
           # System age key — run after rebuild:
           # sudo ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key | sudo tee /var/lib/sops-nix/key.txt
           # Then add the public key here: age-keygen -y /var/lib/sops-nix/key.txt
-          - REPLACE_WITH_AGE_PUBLIC_KEY_AFTER_REBUILD
+          - age1vv9j4r73zt0q55vdf83jap28za0wr2q5tep9asd5pupwcz5ewfts33lnnf
