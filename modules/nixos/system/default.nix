@@ -7,6 +7,7 @@
     ./boot.nix
     ./containers.nix
     ./disks.nix
+    ./hugepages.nix
     ./locale.nix
     ./networking.nix
     ./security.nix

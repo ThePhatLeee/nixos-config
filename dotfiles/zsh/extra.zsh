@@ -47,3 +47,6 @@ alias dbcr="distrobox create"
 alias fck="nix flake check --no-build"                    # eval-only sanity
 alias fup="nix flake update --flake ~/nixos-config"       # bump inputs without rebuilding
 alias fmt="nix fmt -- ~/nixos-config"                     # alejandra via flake formatter
+
+# ── Theming ────────────────────────────────────────────────────────────
+alias wal-sync="$HOME/nixos-config/scripts/wal-sync.sh"   # wallpaper -> kitty palette
