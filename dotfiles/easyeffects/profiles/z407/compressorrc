@@ -1,8 +1,0 @@
-[soe][Compressor#0]
-attack=10
-ratio=2
-sidechainMode=1
-threshold=-18
-release=100
-knee=-6
-makeup=0

@@ -1,4 +1,0 @@
-[StreamOutputs]
-outputDevice=bluez_output.10_94_97_11_5D_1E.1
-plugins=equalizer#0,compressor#0,limiter#0
-visiblePlugin=equalizer#0
