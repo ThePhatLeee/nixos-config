@@ -115,6 +115,53 @@ systemd.user.services.kanshi = {
 - **Desktop**: Hyprland + UWSM + Noctalia shell
 - **Theme**: Compline colorscheme — `dotfiles/noctalia/colorschemes/Compline/Compline.json`
 
+## nvidia.nix — exact correct form (never deviate)
+```nix
+{ ... }:
+{
+  services.graphical-desktop.enable = true;   # required — do not remove
+  services.xserver.videoDrivers = [ "nvidia" ];
+  hardware.nvidia = {
+    open = true;
+    powerManagement = { enable = true; finegrained = true; };
+    dynamicBoost.enable = true;
+  };
+}
+```
+nixos-hardware handles: PRIME offload, bus IDs, open module detection, hardware.graphics.
+
+## Packaging dotfiles assets (SDDM theme, fonts)
+When Nix needs to read files from `dotfiles/` at build time (e.g. SDDM theme running as root):
+```nix
+pkgs.stdenvNoCC.mkDerivation {
+  name = "my-asset";
+  src  = ../../../dotfiles/my-app;  # relative path from the .nix file
+  dontBuild = true;
+  installPhase = ''
+    runHook preInstall
+    install -d $out/share/target-dir
+    cp -r . $out/share/target-dir/
+    runHook postInstall
+  '';
+}
+```
+Add the derivation to `fonts.packages` or `services.displayManager.sddm.extraPackages`.
+SDDM also needs: `kdePackages.qtsvg`, `kdePackages.qtmultimedia`, `kdePackages.qtvirtualkeyboard`.
+
+## Noctalia color overrides (Hyprland)
+Noctalia's built-in `hyprland` template regenerates `noctalia-colors.lua` on every theme change.
+To override a single color (e.g. active border) without touching mPrimary:
+1. Create `dotfiles/noctalia/templates/override.lua` (static Lua or with `{{colors.xxx}}` placeholders)
+2. Register in `dotfiles/noctalia/user-templates.toml`:
+   ```toml
+   [templates.hyprland-border]
+   input_path  = "~/.config/noctalia/templates/hyprland-border.lua"
+   output_path = "~/.config/hypr/noctalia/border-colors.lua"
+   post_hook   = "hyprctl reload"
+   ```
+3. **Seed the output file** in `dotfiles/hypr/noctalia/border-colors.lua` — `dofile` crashes Hyprland on startup if the file doesn't exist before Noctalia first runs.
+4. Source it in `hyprland.lua` after `noctalia-colors.lua`.
+
 ## Git + flake requirement
 New files in the repo must be `git add`ed before Nix can see them (flake uses git tree).
 Forgetting this causes: `error: path '...' is not tracked by Git`

@@ -95,14 +95,36 @@ dotfiles/zathura/      → ~/.config/zathura/
 dotfiles/lazygit/      → ~/.config/lazygit/
 dotfiles/btop/         → ~/.config/btop/
 dotfiles/kanshi/       → ~/.config/kanshi/
+dotfiles/easyeffects/  → ~/.config/easyeffects/    (presets + autoload)
+dotfiles/vscode/       → ~/.vscode/argv.json        (password-store: gnome-libsecret)
 dotfiles/zsh/          → extra.zsh sourced from .zshrc
 dotfiles/claude/       → ~/.claude/               (skills · agents · statusline)
 ```
 
+### Audio (`dotfiles/easyeffects/`)
+- `services.easyeffects.enable = true` — always-on systemd user service
+- Output presets: `XPS Internal`, `Z407`, `Pixel Buds Pro` in `output/`
+- Autoload wiring in `autoload/output/` — device node → preset mapping for all 3 devices
+- Per-device chains: XPS (EQ+bass enhancer+loudness+limiter), BT (EQ+compressor+limiter)
+
+### SDDM (`modules/nixos/desktop/sddm.nix` + `dotfiles/sddm/`)
+- Theme from `dotfiles/sddm/` via `stdenvNoCC.mkDerivation` (SDDM runs as root — must be in store)
+- `extraPackages`: kdePackages.qtsvg + qtmultimedia + qtvirtualkeyboard (required by Qt6 theme)
+- Fonts packaged separately via `stdenvNoCC.mkDerivation` in `fonts.nix`
+- Compline theme: `dotfiles/sddm/Themes/compline.conf`, selected via `metadata.desktop`
+
+### Noctalia theming
+- Border color: Noctalia user-template (`dotfiles/noctalia/user-templates.toml`) generates
+  `dotfiles/hypr/noctalia/border-colors.lua` → sourced after `noctalia-colors.lua` in `hyprland.lua`
+- Seed file (`border-colors.lua`) must exist in dotfiles — dofile crashes if file missing before Noctalia runs
+- mPrimary (`#b4bcc4`) unchanged — border is `#515761` steel via user-template only
+- matugen added to `theming.nix` for Noctalia VS Code extension theme generation
+
 ### Claude Code setup
-- 19 skills in `dotfiles/claude/skills/<name>/SKILL.md` (invoked via `/<name>`)
+- 27 skills in `dotfiles/claude/skills/<name>/SKILL.md` (invoked via `/<name>`)
 - Obsidian MCP via `mcp-server-filesystem` (no nodejs, native nixpkgs binary)
 - Statusline: Compline palette (matches starship + Noctalia Compline colorscheme)
+- `SessionStart` hook: warns on dirty flake; `PreToolUse` hook: blocks rebuild if flake check fails
 
 ---
 
@@ -114,9 +136,15 @@ Everything above is committed and pushed. Run the rebuild.
 **After rebuild:**
 ```bash
 hyprctl reload
+nh home switch                      # activates easyeffects + vscode argv.json symlinks
 sudo mkdir -p /home/.snapshots && sudo chown root:wheel /home/.snapshots && sudo chmod 750 /home/.snapshots
 gh auth login
 ```
+
+### Nix build resource limits (thermal + responsiveness)
+Currently `max-jobs = "auto"` + `cores = 0` in `modules/nixos/nix/settings.nix` saturates all
+CPU cores and ~50% RAM during builds, causing heat and desktop slowdown on XPS 15 9510.
+**Next session audit item**: cap `max-jobs` (e.g. 4–6) and `cores` to leave headroom for the desktop.
 
 ### TPM2 enrollment
 ```bash
@@ -166,6 +194,7 @@ never enforce blind.
 
 ## Deferred
 
+- **Full deep audit (next session)**: every module, dotfile, skill, and config aspect — bring entire setup to next level. Includes Nix build limits, security posture, power tuning, Hyprland/Noctalia polish, dev workflow, performance.
 - **2026-05-30**: Switch `nixpkgs` → `nixos-26.05`, `home-manager` → `release-26.05`, bump `stateVersion` to `"26.05"`. Remove the two test-skip overlays in `modules/nixos/nix/settings.nix` (openldap-i686 + tpm2-pytss) — upstream fixes land in the release branch
 - **Kali VM**: create manually via virt-manager (intentional — not declarative)
 - **nftables deeper ruleset**: low priority for desktop, current INVALID drop + NixOS firewall is sufficient
