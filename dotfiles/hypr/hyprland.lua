@@ -13,3 +13,5 @@ require("conf.autostart")
 
 -- This loads Noctalia-generated Hyprland colors.
 dofile(os.getenv("HOME") .. "/.config/hypr/noctalia/noctalia-colors.lua")
+-- Border overrides — survives Noctalia theme regeneration.
+dofile(os.getenv("HOME") .. "/.config/hypr/noctalia/border-override.lua")
