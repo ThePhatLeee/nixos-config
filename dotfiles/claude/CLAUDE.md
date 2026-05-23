@@ -35,6 +35,16 @@ Active skills:
   /python       /security     /sysadmin     /ict
   /spec         /fix-issue    /review-pr    /learn        /session-review
 
+  # Workflow-specific (added in PR #8)
+  /distrobox            container topology + entry + VSCode attach for this host
+  /threat-model         STRIDE + OWASP per-feature; pairs with /spec
+  /awwwards-audit       SOTD/Honors pre-submission + design-review checklist
+  /web-vitals           LCP/INP/CLS + Three.js frame-time + Lighthouse
+  /blender-cli          headless render + CUDA verify + render-farm patterns
+  /nix-vm-test          NixOS VM tests for risky modules (before nh os switch)
+  /design-systems       tokens + Figma Code Connect + component API rules
+  /laravel-security     Sanctum + policies + CSRF/CORS + Pest security tests
+
 ## Continuous learning
 After any correction, new pattern, or exceptional result:
 1. Flag: "This extends /skill-name — should I update it?"
