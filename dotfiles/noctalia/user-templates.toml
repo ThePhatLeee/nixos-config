@@ -2,16 +2,8 @@
 
 [templates]
 
-# User-defined templates
-# Add your custom templates below
-# Example:
-# [templates.myapp]
-# input_path = "~/.config/noctalia/templates/myapp.css"
-# output_path = "~/.config/myapp/theme.css"
-# post_hook = "myapp --reload-theme"
-
-# Remove this section and add your own templates
-#[templates.placeholder]
-#input_path = "/nix/store/f06ic53444jb8zjg0042rmw3crm1v4ka-noctalia-shell-2026-05-18_da95089/share/noctalia-shell/Assets/Templates/noctalia.json"
-#output_path = "/home/phatle/.cache/noctalia/placeholder.json"
+[templates.hyprland-border]
+input_path = "~/.config/noctalia/templates/hyprland-border.lua"
+output_path = "~/.config/hypr/noctalia/border-colors.lua"
+post_hook = "hyprctl reload"
 
