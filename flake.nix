@@ -41,16 +41,10 @@
   outputs = { self, nixpkgs, home-manager, noctalia, nixos-hardware, nix-index-database, lanzaboote, sops-nix, ... }@inputs:
   let
     system = "x86_64-linux";
-    pkgs   = import nixpkgs { inherit system; config.allowUnfree = true; };
+    pkgs   = nixpkgs.legacyPackages.${system};
   in {
     # `nix fmt` formats the whole tree with alejandra.
     formatter.${system} = pkgs.alejandra;
-
-    homeConfigurations.phatle = home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
-      extraSpecialArgs = { inherit inputs; };
-      modules = [ ./home/phatle/default.nix ];
-    };
 
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       inherit system;
