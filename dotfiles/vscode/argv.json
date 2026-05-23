@@ -1,0 +1,7 @@
+// Permanent VS Code startup arguments.
+// NOTE: Changing this file requires a restart of VS Code.
+{
+	"enable-crash-reporter": true,
+	"crash-reporter-id": "a531aa87-ef90-4ad9-a255-7ec0f2c94a06",
+	"password-store": "gnome-libsecret"
+}

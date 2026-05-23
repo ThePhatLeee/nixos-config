@@ -18,6 +18,11 @@ in
     enable         = true;
     wayland.enable = true;
     theme          = "sddm-astronaut-theme";
-    extraPackages  = [ theme ];
+    extraPackages  = with pkgs.kdePackages; [
+      theme
+      qtsvg
+      qtmultimedia
+      qtvirtualkeyboard
+    ];
   };
 }
