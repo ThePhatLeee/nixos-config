@@ -41,7 +41,7 @@
   outputs = { self, nixpkgs, home-manager, noctalia, nixos-hardware, nix-index-database, lanzaboote, sops-nix, ... }@inputs:
   let
     system = "x86_64-linux";
-    pkgs   = nixpkgs.legacyPackages.${system};
+    pkgs   = import nixpkgs { inherit system; config.allowUnfree = true; };
   in {
     # `nix fmt` formats the whole tree with alejandra.
     formatter.${system} = pkgs.alejandra;
