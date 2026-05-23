@@ -1,23 +1,15 @@
 #!/usr/bin/env bash
-# Switch EasyEffects profile by copying the matching rc files into db/
-# Usage: ee-switch.sh <profile-name>
-# Profiles: xps-internal | z407 | pixel-buds-pro
+PROFILES="$HOME/.config/easyeffects/profiles"
+DB="$HOME/.config/easyeffects/db"
 
-PROFILE="${1:-xps-internal}"
-CONFIG_DIR="${HOME}/.config/easyeffects"
-PROFILES_DIR="${CONFIG_DIR}/profiles"
-DB_DIR="${CONFIG_DIR}/db"
+switch() {
+  cp -f "$PROFILES/$1"/*rc "$DB"/
+  systemctl --user restart easyeffects.service 2>/dev/null || true
+}
 
-if [[ ! -d "${PROFILES_DIR}/${PROFILE}" ]]; then
-    echo "Unknown profile: ${PROFILE}" >&2
-    exit 1
-fi
-
-cp "${PROFILES_DIR}/${PROFILE}"/*.rc "${DB_DIR}/" 2>/dev/null
-# Copy files without the rc suffix mapping
-for f in "${PROFILES_DIR}/${PROFILE}"/*rc; do
-    cp "$f" "${DB_DIR}/$(basename "$f")"
-done
-
-# Restart EasyEffects service to pick up new config
-systemctl --user restart easyeffects.service
+case "$1" in
+  *pci*1f.3*)          switch xps-internal   ;;
+  *10_94_97_11_5D_1E*) switch z407            ;;
+  *B8_7B_D4_07_E8_37*) switch pixel-buds-pro ;;
+  *)                   switch xps-internal   ;;
+esac
