@@ -26,8 +26,7 @@ flake.nix           single host: nixosConfigurations.nixos
 NEVER run rebuilds yourself — the user runs `nh os switch` (needs sudo). After config changes, run `nix flake check --no-build` to verify eval, then tell the user to rebuild.
 
 ```bash
-nh os switch          # full system + home rebuild (user runs)
-nh home switch        # home-manager only, no sudo (user runs)
+nh os switch          # full system + home rebuild (user runs, needs sudo)
 nix flake check       # eval-only validation (you may run)
 ```
 
