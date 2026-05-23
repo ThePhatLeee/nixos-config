@@ -178,42 +178,67 @@ never enforce blind.
 - **Wal-sync template expansion**: today only kitty follows the wallpaper. Add zathura / starship / hyprlock / yazi / Noctalia templates as you decide each should follow (see `scripts/wal-sync.sh` for the pattern). Noctalia palette switch can be triggered via `noctalia-shell ipc call colorscheme set <name>` per the v4 hooks block
 - **NixOS VM tests** for security.nix / ssh.nix / usbguard.nix — see the `/nix-vm-test` skill for the harness; wire into `flake.nix#checks` when written
 
-## Noctalia v4 vs legacy daemons (cleanup pending)
+## Noctalia v4 — all-Noctalia path (resolved in PR #8)
 
-Noctalia v4 natively manages all of: idle (settings.json `idle` block —
-`lockTimeout`, `screenOffTimeout`, `suspendTimeout`, `fadeDuration`,
-`customCommands` as a JSON array of `{timeout, command, resumeCommand}`),
-lock screen (`general.compactLockScreen`, `lockOnSuspend`,
-`lockScreenAnimations`, `lockScreenBlur`, fprintd unlock, etc.),
-brightness (top-level `brightness` block), wallpaper (top-level
-`wallpaper` block with rotation modes), night light (top-level
-`nightLight`), hooks (`screenLock`, `screenUnlock`, `wallpaperChange`,
-`colorGeneration`, `darkModeChange`, `session`, `startup`), and polkit
-(via the `noctalia/plugins/polkit-agent/` plugin).
+Verified against `noctalia-shell` source (Quickshell singletons):
+- `Services/Power/IdleService.qml` — auto-starts on shell init, uses
+  native `ext-idle-notify-v1` Wayland protocol, parses
+  `Settings.data.idle.customCommands` as a JSON array of
+  `{timeout, command, resumeCommand}`, and drives three core stages
+  (`screenOffTimeout` → `CompositorService.turnOffMonitors()`,
+   `lockTimeout` → `PanelService.lockScreen.active = true`,
+   `suspendTimeout` → `CompositorService.suspend()`), each preceded
+  by a fade overlay (`fadeDuration` s). Not media-aware — won't
+  inhibit during video playback (filed against future Noctalia, not
+  our problem to patch).
+- `Services/Keyboard/ClipboardService.qml` — auto-spawns
+  `appLauncher.clipboardWatchTextCommand` and
+  `appLauncher.clipboardWatchImageCommand` (the exact `wl-paste --watch`
+  commands), with a 1s watchdog that restarts them if they die.
+- `noctalia/plugins/polkit-agent/Main.qml` (enabled via
+  `noctalia/plugins.json`) — uses `Quickshell.Services.Polkit`, opens
+  a Compline-styled window when an agent request arrives.
 
-Current state — duplicates that race Noctalia:
-- `dotfiles/hypr/conf/autostart.lua:5` starts `hypridle` AND Noctalia
-  → both manage idle. hypridle DPMS-off at 600s, Noctalia
-  `screenOffTimeout` default 600s → simultaneous fire on the same tick.
-- `dotfiles/hypr/conf/autostart.lua:4` starts `hyprpolkitagent` AND the
-  Noctalia polkit-agent plugin exists in `noctalia/plugins/polkit-agent/`
-  → both polkit handlers register; the first to grab the bus wins, the
-  other logs noise.
+Removed in PR #8 (these were duplicating Noctalia services and racing
+them — both polkit handlers fought for the DBus name, both idle daemons
+fired actions on the same tick, both `wl-paste --watch` processes wrote
+the same entries to cliphist):
+- `dotfiles/hypr/conf/autostart.lua` — dropped `hyprpolkitagent`,
+  `hypridle`, and both `wl-paste --type {text,image} --watch cliphist
+  store` lines. Now only `noctalia-shell` + the staggered app starts.
+- `home/modules/apps/hyprland.nix` — dropped `hypridle` and
+  `hyprpolkitagent` from the package set.
+- `dotfiles/hypr/hypridle.conf` — deleted (orphan: no daemon left to
+  read it).
 
-Decision needed (pick one path per daemon):
-1. **All-Noctalia** — remove `hypridle` + `hyprpolkitagent` from
-   autostart, move OLED brightness-dim tiers into Noctalia's
-   `idle.customCommands`, disable the noctalia polkit plugin if you
-   prefer hyprpolkitagent (or vice versa). Cleanest, fewest moving parts.
-2. **Defense-in-depth** — keep hypridle as a backup if Noctalia crashes;
-   stagger timeouts so hypridle fires later than Noctalia for each tier;
-   pick one polkit agent and disable the other.
-3. **Status quo** — accept the duplication; nothing breaks visibly,
-   slight log noise + 2× idle events per tick.
+Kept: `hyprcursor`, `hyprpicker`, `hyprshot`, `kanshi`. None overlap
+with Noctalia; all are on-demand or single-purpose.
 
-NOT touching `dotfiles/noctalia/settings.json` in this PR — that's your
-shell's source of truth and the schema is opinionated; the safe path is
-to make this decision yourself with the Noctalia docs open.
+### Tuning Noctalia idle for OLED + cybersec hygiene (you decide)
+
+Apply via the Noctalia settings GUI (preferred — it validates) OR by
+hand-editing `dotfiles/noctalia/settings.json`. Suggestions for your
+panel + workflow:
+
+```jsonc
+"idle": {
+  "enabled": true,
+  "fadeDuration": 5,
+  "lockTimeout": 300,        // 5 min — sec-conscious daily driver
+  "screenOffTimeout": 420,   // 7 min — OLED-friendly early black
+  "suspendTimeout": 1800,    // 30 min — keep
+  // OLED brightness-dim tiers BEFORE lock fires
+  "customCommands": "[{\"timeout\":120,\"command\":\"brightnessctl -s set 40%\",\"resumeCommand\":\"brightnessctl -r\"},{\"timeout\":240,\"command\":\"brightnessctl set 10%\",\"resumeCommand\":\"brightnessctl -r\"}]"
+}
+```
+
+That gives you:
+- 2 min  → dim to 40 %  (gentle warning)
+- 4 min  → dim to 10 %  (deep dim)
+- 5 min  → lock          (Noctalia lockTimeout)
+- 7 min  → screen off    (Noctalia screenOffTimeout)
+- 30 min → suspend       (Noctalia suspendTimeout)
+- Resume cancels brightness restores (`brightnessctl -r`).
 
 ## Modules added in PR #8
 

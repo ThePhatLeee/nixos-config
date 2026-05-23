@@ -1,14 +1,11 @@
 -- ── Autostart ─────────────────────────────────────────────────────────
+-- Noctalia v4 owns: idle (ext-idle-notify-v1), lock screen, polkit
+-- (via the polkit-agent plugin), clipboard watchers (spawns
+-- clipboardWatchTextCommand/ImageCommand on shell start with watchdog),
+-- brightness, wallpaper, nightLight. Don't duplicate those here.
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("hyprpolkitagent")
-    hl.exec_cmd("hypridle")
-
-    -- Clipboard history backend (Noctalia launcher clipboard reads from cliphist)
-    hl.exec_cmd("wl-paste --type text  --watch cliphist store")
-    hl.exec_cmd("wl-paste --type image --watch cliphist store")
-
-    -- Desktop shell
+    -- Desktop shell — also brings up idle, polkit, clipboard watchers
     hl.exec_cmd("noctalia-shell")
 
     -- Staggered app autostart — workspace rules assign silently, focus stays on WP2
