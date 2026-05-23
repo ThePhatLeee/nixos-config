@@ -46,6 +46,12 @@
     # `nix fmt` formats the whole tree with alejandra.
     formatter.${system} = pkgs.alejandra;
 
+    homeConfigurations.phatle = home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      extraSpecialArgs = { inherit inputs; };
+      modules = [ ./home/phatle/default.nix ];
+    };
+
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       inherit system;
       specialArgs = { inherit inputs; };
