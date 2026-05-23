@@ -37,9 +37,14 @@
   # Lutris pulls in openldap-i686; the binary is fine, the test suite is not sandbox-safe.
   nixpkgs.overlays = [
     (_: prev: {
+      # openldap i686: flaky syncreplication timing test, not sandbox-safe
       pkgsi686Linux = prev.pkgsi686Linux.extend (_: p: {
         openldap = p.openldap.overrideAttrs (_: { doCheck = false; });
       });
+      # tpm2-pytss 2.3.0: abstract class interface mismatch with python-cryptography
+      python3Packages = prev.python3Packages // {
+        tpm2-pytss = prev.python3Packages.tpm2-pytss.overrideAttrs (_: { doCheck = false; });
+      };
     })
   ];
 
