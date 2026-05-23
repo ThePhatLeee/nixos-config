@@ -136,7 +136,6 @@ Everything above is committed and pushed. Run the rebuild.
 **After rebuild:**
 ```bash
 hyprctl reload
-nh home switch                      # activates easyeffects + vscode argv.json symlinks
 sudo mkdir -p /home/.snapshots && sudo chown root:wheel /home/.snapshots && sudo chmod 750 /home/.snapshots
 gh auth login
 ```
