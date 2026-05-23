@@ -6,32 +6,29 @@ local primary = "rgb(b4bcc4)"
 local surface = "rgb(1a1d21)"
 local secondary = "rgb(b4bcc4)"
 local error = "rgb(cdacac)"
--- Compline palette: steel grey active border, barely-visible inactive seam
-local active_border   = "rgb(515761)"   -- bright.black — neutral steel, not pink
-local inactive_border = "rgb(22262b)"   -- mSurfaceVariant — hairline, not invisible
 
 hl.config({
 	general = {
 		col = {
-			active_border   = active_border,
-			inactive_border = inactive_border,
+			active_border = primary,
+			inactive_border = surface,
 		},
 	},
 
 	group = {
 		col = {
-			border_active        = active_border,
-			border_inactive      = inactive_border,
+			border_active = secondary,
+			border_inactive = surface,
 			border_locked_active = error,
-			border_locked_inactive = inactive_border,
+			border_locked_inactive = surface,
 		},
 
 		groupbar = {
 			col = {
-				active        = active_border,
-				inactive      = inactive_border,
+				active = secondary,
+				inactive = surface,
 				locked_active = error,
-				locked_inactive = inactive_border,
+				locked_inactive = surface,
 			},
 		},
 	},

@@ -3,6 +3,7 @@
 {
   imports = [
     ./academic.nix
+    ./easyeffects.nix
     ./communication.nix
     ./creative.nix
     ./files.nix
