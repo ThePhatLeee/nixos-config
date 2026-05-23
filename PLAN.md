@@ -170,8 +170,50 @@ never enforce blind.
 - **Kali VM**: create manually via virt-manager (intentional — not declarative)
 - **nftables deeper ruleset**: low priority for desktop, current INVALID drop + NixOS firewall is sufficient
 - **`/proc` hidepid=2**: mount-option (not sysctl), needs a `proc` group exemption to not break sshd/systemd — separate small change with a NixOS VM test
-- **Wal-sync template expansion**: today only kitty follows the wallpaper. Add zathura / starship / hyprlock / yazi / Noctalia templates as you decide each should follow (see `scripts/wal-sync.sh` for the pattern)
+- **OLED idle tiers**: should live in Noctalia `settings.json → idle.customCommands` (JSON array of `{timeout, command, resumeCommand}`), not hypridle. E.g.
+  ```json
+  "customCommands": "[{\"timeout\":120,\"command\":\"brightnessctl -s set 40%\",\"resumeCommand\":\"brightnessctl -r\"},{\"timeout\":240,\"command\":\"brightnessctl set 10%\",\"resumeCommand\":\"brightnessctl -r\"}]"
+  ```
+  Pair with `screenOffTimeout: 420` for OLED-friendly early black. Decide as part of the Noctalia-vs-hypridle cleanup above
+- **Wal-sync template expansion**: today only kitty follows the wallpaper. Add zathura / starship / hyprlock / yazi / Noctalia templates as you decide each should follow (see `scripts/wal-sync.sh` for the pattern). Noctalia palette switch can be triggered via `noctalia-shell ipc call colorscheme set <name>` per the v4 hooks block
 - **NixOS VM tests** for security.nix / ssh.nix / usbguard.nix — see the `/nix-vm-test` skill for the harness; wire into `flake.nix#checks` when written
+
+## Noctalia v4 vs legacy daemons (cleanup pending)
+
+Noctalia v4 natively manages all of: idle (settings.json `idle` block —
+`lockTimeout`, `screenOffTimeout`, `suspendTimeout`, `fadeDuration`,
+`customCommands` as a JSON array of `{timeout, command, resumeCommand}`),
+lock screen (`general.compactLockScreen`, `lockOnSuspend`,
+`lockScreenAnimations`, `lockScreenBlur`, fprintd unlock, etc.),
+brightness (top-level `brightness` block), wallpaper (top-level
+`wallpaper` block with rotation modes), night light (top-level
+`nightLight`), hooks (`screenLock`, `screenUnlock`, `wallpaperChange`,
+`colorGeneration`, `darkModeChange`, `session`, `startup`), and polkit
+(via the `noctalia/plugins/polkit-agent/` plugin).
+
+Current state — duplicates that race Noctalia:
+- `dotfiles/hypr/conf/autostart.lua:5` starts `hypridle` AND Noctalia
+  → both manage idle. hypridle DPMS-off at 600s, Noctalia
+  `screenOffTimeout` default 600s → simultaneous fire on the same tick.
+- `dotfiles/hypr/conf/autostart.lua:4` starts `hyprpolkitagent` AND the
+  Noctalia polkit-agent plugin exists in `noctalia/plugins/polkit-agent/`
+  → both polkit handlers register; the first to grab the bus wins, the
+  other logs noise.
+
+Decision needed (pick one path per daemon):
+1. **All-Noctalia** — remove `hypridle` + `hyprpolkitagent` from
+   autostart, move OLED brightness-dim tiers into Noctalia's
+   `idle.customCommands`, disable the noctalia polkit plugin if you
+   prefer hyprpolkitagent (or vice versa). Cleanest, fewest moving parts.
+2. **Defense-in-depth** — keep hypridle as a backup if Noctalia crashes;
+   stagger timeouts so hypridle fires later than Noctalia for each tier;
+   pick one polkit agent and disable the other.
+3. **Status quo** — accept the duplication; nothing breaks visibly,
+   slight log noise + 2× idle events per tick.
+
+NOT touching `dotfiles/noctalia/settings.json` in this PR — that's your
+shell's source of truth and the schema is opinionated; the safe path is
+to make this decision yourself with the Noctalia docs open.
 
 ## Modules added in PR #8
 
