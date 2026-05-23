@@ -32,4 +32,4 @@ hl.window_rule({ name = "nautilus-props", match = { class = "org.gnome.Nautilus"
 hl.window_rule({ name = "ws1-vscode",      match = { class = "Code"        }, workspace = "1 silent" })
 hl.window_rule({ name = "ws2-firefox",     match = { class = "firefox"     }, workspace = "2 silent" })
 hl.window_rule({ name = "ws4-thunderbird", match = { class = "thunderbird"  }, workspace = "4 silent" })
-hl.window_rule({ name = "ws5-signal",      match = { class = "Signal"      }, workspace = "5 silent" })
+hl.window_rule({ name = "ws5-signal",      match = { class = "signal-desktop" }, workspace = "5 silent" })

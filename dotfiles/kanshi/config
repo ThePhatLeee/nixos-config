@@ -1,6 +1,6 @@
 profile docked {
 	output "Samsung Display Corp. 0x414D" disable
-	output "LG Electronics LG HDR WQHD" mode 3440x1440@59.97Hz scale 1 position 0,0
+	output "LG Electronics LG HDR WQHD 0x00041D8C" mode 3440x1440@59.97Hz scale 1 position 0,0
 }
 
 profile laptop {
