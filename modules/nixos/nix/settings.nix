@@ -35,13 +35,15 @@
 
   # openldap i686 checkPhase is a flaky syncreplication timing test — skip it.
   # Lutris pulls in openldap-i686; the binary is fine, the test suite is not sandbox-safe.
+  # TODO(26.05): remove both overlays after switching to nixos-26.05 stable —
+  # these are unstable-only test failures fixed upstream in the release branch.
   nixpkgs.overlays = [
     (_: prev: {
-      # openldap i686: flaky syncreplication timing test, not sandbox-safe
+      # TEMP(unstable): openldap i686 flaky syncreplication test, not sandbox-safe
       pkgsi686Linux = prev.pkgsi686Linux.extend (_: p: {
         openldap = p.openldap.overrideAttrs (_: { doCheck = false; });
       });
-      # tpm2-pytss 2.3.0: abstract class interface mismatch with python-cryptography
+      # TEMP(unstable): tpm2-pytss 2.3.0 abstract class mismatch with python-cryptography
       python3Packages = prev.python3Packages // {
         tpm2-pytss = prev.python3Packages.tpm2-pytss.overrideAttrs (_: { doCheck = false; });
       };
