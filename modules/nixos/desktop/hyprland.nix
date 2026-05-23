@@ -48,6 +48,9 @@
     slurp          # region picker
     wl-clipboard   # wl-copy / wl-paste
     cliphist       # clipboard history backend for Noctalia
+    wtype          # virtual keyboard — required by Noctalia appLauncher.autoPasteClipboard
+                   # Without it, the autoPaste toggle is greyed out in the Noctalia GUI
+                   # (ProgramCheckerService.wtypeAvailable gate, per ClipboardSubTab.qml)
     xdg-utils
     libnotify      # notify-send — scripts, earlyoom desktop alerts, custom notifications
     man-pages       # Linux syscall man pages (man 2 open, man 2 mmap, ...)

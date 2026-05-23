@@ -214,6 +214,43 @@ the same entries to cliphist):
 Kept: `hyprcursor`, `hyprpicker`, `hyprshot`, `kanshi`. None overlap
 with Noctalia; all are on-demand or single-purpose.
 
+### Noctalia clipboard autoPaste — wtype dependency
+
+Noctalia gates `appLauncher.autoPasteClipboard` behind
+`ProgramCheckerService.wtypeAvailable` (per
+`Modules/Panels/Settings/Tabs/Launcher/ClipboardSubTab.qml`). Without
+`wtype` on PATH the toggle is greyed-out in the Noctalia GUI even when
+clipboard history is enabled. `wtype` is now in
+`modules/nixos/desktop/hyprland.nix` alongside `wl-clipboard` and
+`cliphist`. Flip `appLauncher.autoPasteClipboard: true` in the
+Noctalia settings to use it.
+
+### Power management — TLP as the sole daemon (confirmed)
+
+Verified state in `modules/nixos/hardware/power.nix`:
+- `services.power-profiles-daemon.enable = false` — ppd is off
+- `services.tlp.enable = true` — TLP is on
+- `PLATFORM_PROFILE_ON_AC = "performance"` /
+  `PLATFORM_PROFILE_ON_BAT = "balanced"` — TLP writes
+  `/sys/firmware/acpi/platform_profile` (Dell XPS 15 9510 exposes
+  this via the `dell-pcc` kernel driver)
+- New in PR #8: `CPU_POWER_MAX_ON_AC=65 / _ON_BAT=35` (RAPL PL1 caps)
+- `services.thermald.enable` pinned via `mkForce true` so it can't
+  get flipped off by a future module import
+
+TLP is the right choice for this machine — ppd doesn't handle battery
+charge thresholds (20-80 %), USB autosuspend, ASPM, SATA link-power,
+audio power-save, or per-AC/BAT sleep mode (deep vs s2idle) out of the
+box; TLP does all of these natively.
+
+Verify post-rebuild:
+```bash
+tlp-stat -s | grep -E 'TLP_ENABLE|Mode'
+cat /sys/firmware/acpi/platform_profile          # current profile
+cat /sys/firmware/acpi/platform_profile_choices  # available
+sudo tlp-stat -p | grep -E 'platform_profile|policy'
+```
+
 ### Tuning Noctalia idle for OLED + cybersec hygiene (you decide)
 
 Apply via the Noctalia settings GUI (preferred — it validates) OR by
