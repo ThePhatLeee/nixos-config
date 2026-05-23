@@ -9,7 +9,17 @@
       "WebSearch(*)",
       "MultilineInput(*)"
     ],
-    "deny": []
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(sudo rm -rf /*)",
+      "Bash(dd if=*of=/dev/sd*)",
+      "Bash(dd if=*of=/dev/nvme*)",
+      "Bash(mkfs.*)",
+      "Bash(:(){:|:&};:)",
+      "Bash(*--no-verify*)",
+      "Bash(git push --force *main*)",
+      "Bash(git push --force *master*)"
+    ]
   },
   "thinking": {
     "type": "enabled",
@@ -26,12 +36,34 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -qE '\\b(nh os switch|nixos-rebuild)\\b'; then cd \"$HOME/nixos-config\" 2>/dev/null && nix flake check --no-build || { echo 'flake check failed — aborting rebuild' >&2; exit 2; }; fi"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$HOME/nixos-config\" 2>/dev/null && [ -n \"$(git status --porcelain flake.lock flake.nix 2>/dev/null)\" ] && echo '⚠ flake.{nix,lock} has uncommitted changes' >&2; true"
+          }
+        ]
+      }
     ]
   },
   "mcpServers": {
     "obsidian": {
       "command": "mcp-server-filesystem",
-      "args": ["/home/phatle/Documents/Obsidian"],
+      "args": ["${HOME}/Documents/Obsidian"],
       "env": {}
     }
   },

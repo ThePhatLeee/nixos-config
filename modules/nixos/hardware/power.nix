@@ -1,10 +1,12 @@
 { config, lib, pkgs, ... }:
 
 # Laptop power management — TLP, firmware updates, battery info.
-# thermald is handled by nixos-hardware/dell-xps-15-9510 (mkDefault true).
+# thermald is enabled by nixos-hardware/dell-xps-15-9510 via mkDefault — pinned
+# below so it can't get flipped off silently by future module imports.
 # TLP conflicts with power-profiles-daemon; the latter is disabled here.
 {
   services.power-profiles-daemon.enable = false;
+  services.thermald.enable = lib.mkForce true;
 
   services.tlp = {
     enable = true;
@@ -38,6 +40,13 @@
       CPU_BOOST_ON_BAT = 0;
       PLATFORM_PROFILE_ON_AC  = "performance";
       PLATFORM_PROFILE_ON_BAT = "balanced";
+
+      # ── RAPL power limits (PL1) ──────────────────────────────────────
+      # i9-11900H is a 45W TDP that boosts to 65W+ — capping PL1 cuts
+      # sustained battery drain without affecting short bursts (PL2 untouched).
+      # Drop to 25 on battery if you want max endurance over throughput.
+      CPU_POWER_MAX_ON_AC  = 65;
+      CPU_POWER_MAX_ON_BAT = 35;
 
       # ── USB autosuspend ───────────────────────────────────────────────
       USB_AUTOSUSPEND_ON_BAT = 1;

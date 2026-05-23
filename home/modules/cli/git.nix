@@ -1,5 +1,8 @@
 { pkgs, ... }:
 
+let
+  gpgSigningKey = "09D801B2351193B1";
+in
 {
   home.packages = [ pkgs.lazygit ];
 
@@ -8,7 +11,7 @@
     settings = {
       user.name       = "Marko Jokinen";
       user.email      = "phat.le@thephatle.dev";
-      user.signingkey = "09D801B2351193B1";
+      user.signingkey = gpgSigningKey;
 
       commit.gpgsign      = true;
       gpg.program         = "gpg2";

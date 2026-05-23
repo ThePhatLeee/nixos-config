@@ -12,11 +12,11 @@
     enable    = true;
     flake     = "/home/phatle/nixos-config";  # sets $FLAKE, used by all nh commands
 
-    # Auto-clean old generations
+    # Auto-clean old generations — keep ~2 weeks of rollback runway
     clean = {
       enable    = true;
       dates     = "weekly";
-      extraArgs = "--keep-since 7d --keep 10";
+      extraArgs = "--keep-since 14d --keep 14";
     };
   };
 

@@ -3,11 +3,12 @@
 # Hyprland user-level packages and cursor env vars.
 # Session is started by system-level programs.hyprland (withUWSM).
 # Config lives entirely in dotfiles/hypr/ via the dotfiles symlink.
+#
+# NOTE: hypridle + hyprpolkitagent removed — Noctalia v4 owns idle
+# (ext-idle-notify-v1) and polkit (via the polkit-agent plugin).
 {
   home.packages = with pkgs; [
     hyprcursor
-    hypridle
-    hyprpolkitagent
     hyprpicker
     hyprshot
     kanshi

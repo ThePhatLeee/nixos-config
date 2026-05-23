@@ -39,6 +39,8 @@ I_PY=$(printf '\xee\x9c\xbc')      # U+E73C  dev-python
 I_REACT=$(printf '\xee\x9e\xba')   # U+E7BA  dev-react
 I_LUA=$(printf '\xee\x98\xa0')     # U+E620  seti-lua
 I_C=$(printf '\xee\x98\x9e')       # U+E61E  custom-c
+I_BOX=$(printf '\xf3\xb0\x83\x95') # U+F00D5 mdi-package
+I_BAT=$(printf '\xf3\xb0\x84\x9c') # U+F011C mdi-battery
 
 input=$(cat)
 model=$(echo "$input"    | jq -r '.model.display_name // ""')
@@ -84,7 +86,6 @@ if [ -n "$cwd" ]; then
   if [ -f "$cwd/package.json" ]; then
     [ -f "$cwd/bun.lockb" ] && stack+="$I_BUN " || stack+="$I_NODE "
     grep -q '"react"' "$cwd/package.json" 2>/dev/null && stack+="$I_REACT "
-    [ -f "$cwd/tsconfig.json" ] && stack+="$I_TS "
   fi
   [ -f "$cwd/artisan" ]        && stack+="$I_LARAVEL " || { [ -f "$cwd/composer.json" ] && stack+="$I_PHP "; }
   [ -f "$cwd/CMakeLists.txt" ] && stack+="$I_C "
@@ -103,6 +104,26 @@ if [ -n "$vim_mode" ]; then
 fi
 
 model_label=$(echo "$model" | sed 's/^[Cc]laude //')
+
+# ── Distrobox container detection ──────────────────────────────────────
+# distrobox-enter sets CONTAINER_ID; toolbx sets HOSTNAME=toolbox + a marker.
+container=""
+[ -n "${CONTAINER_ID:-}" ] && container="$CONTAINER_ID"
+[ -z "$container" ] && [ -f /run/.containerenv ] && container=$(grep -oP 'name="\K[^"]+' /run/.containerenv 2>/dev/null || true)
+
+# ── Battery (silent on desktop / no BAT0) ──────────────────────────────
+bat_pct=""
+bat_status=""
+if [ -r /sys/class/power_supply/BAT0/capacity ]; then
+  bat_pct=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null)
+  bat_status=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null)
+fi
+
+# ── Flake-dirty indicator (only when cwd is inside ~/nixos-config) ─────
+flake_dirty=""
+if [ -n "$cwd" ] && [ -f "$cwd/flake.lock" ]; then
+  GIT_OPTIONAL_LOCKS=0 git -C "$cwd" diff --quiet flake.lock flake.nix 2>/dev/null || flake_dirty="1"
+fi
 
 # ── Reset timer helper ─────────────────────────────────────────────────
 fmt_reset() {
@@ -162,8 +183,10 @@ out=""
 
 out+="${F_DIM}░▒▓${R}"
 
-# Seg1 — #a3aed2: NixOS icon + vim badge
-out+="${B1}${F_DARK} ${I_NIX}${badge} ${R}"
+# Seg1 — #a3aed2: NixOS icon + optional distrobox + vim badge
+seg1_extra=""
+[ -n "$container" ] && seg1_extra=" ${I_BOX} ${container}"
+out+="${B1}${F_DARK} ${I_NIX}${seg1_extra}${badge} ${R}"
 
 # → #769ff0
 out+="${B2}${F_DIM}${A}"
@@ -188,8 +211,23 @@ out+="${F_ACC} ${stack}${F_MUTED}${model_label:-claude} ${R}"
 # → #1d2230
 out+="${B4}${F_LNG}${A}"
 
-# Seg5 — #1d2230: ctx + rate (mirrors starship time seg)
-out+=" ${ctx_info:-${F_MUTED}…} ${R}"
+# ── Seg5 prefix: battery + flake-dirty indicators ─────────────────────
+extras=""
+if [ -n "$bat_pct" ]; then
+  if   [ "$bat_pct" -lt 20 ]; then bc="$F_RED"
+  elif [ "$bat_pct" -lt 40 ]; then bc="$F_YLW"
+  else                              bc="$F_MUTED"
+  fi
+  charging=""
+  [ "$bat_status" = "Charging" ] && charging="+"
+  extras="${bc}${I_BAT} ${bat_pct}%${charging}"
+fi
+if [ -n "$flake_dirty" ]; then
+  extras="${extras:+${extras} ${F_SRF}·${F_MUTED} }${F_YLW}flake*"
+fi
+
+# Seg5 — #1d2230: ctx + rate + battery + flake (mirrors starship time seg)
+out+=" ${extras:+${extras} ${F_SRF}·${F_MUTED} }${ctx_info:-${F_MUTED}…} ${R}"
 
 out+="${F_SRF}${A}${R}"
 
