@@ -42,3 +42,8 @@ alias fs="distrobox enter fullstack"
 alias it="distrobox enter it"
 alias dbl="distrobox list"
 alias dbcr="distrobox create"
+
+# ── Nix flake helpers ──────────────────────────────────────────────────
+alias fck="nix flake check --no-build"                    # eval-only sanity
+alias fup="nix flake update --flake ~/nixos-config"       # bump inputs without rebuilding
+alias fmt="nix fmt -- ~/nixos-config"                     # alejandra via flake formatter

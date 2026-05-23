@@ -26,8 +26,15 @@
   boot.initrd.kernelModules = [ "vmd" ];
 
   # Silent boot — Plymouth adds "splash" automatically via desktop/plymouth.nix.
+  # IOMMU: required for KVM/QEMU PCI device acceleration + DMA protection.
+  # iommu=pt = passthrough for host devices (no perf cost when not used).
   boot.consoleLogLevel = 3;
-  boot.kernelParams = [ "quiet" "loglevel=3" ];
+  boot.kernelParams = [
+    "quiet"
+    "loglevel=3"
+    "intel_iommu=on"
+    "iommu=pt"
+  ];
 
   boot.tmp.useTmpfs  = true;
   boot.tmp.tmpfsSize = "4G";
