@@ -19,6 +19,6 @@ in {
     ".config/kanshi".source                  = link "${dotfiles}/kanshi";
     ".config/easyeffects".source             = link "${dotfiles}/easyeffects";
     ".claude".source                         = link "${dotfiles}/claude";
-    ".vscode-oss/argv.json".source           = link "${dotfiles}/vscode/argv.json";
+    ".vscode/argv.json".source               = link "${dotfiles}/vscode/argv.json";
   };
 }
