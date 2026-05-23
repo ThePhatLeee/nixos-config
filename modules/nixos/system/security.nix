@@ -72,7 +72,7 @@ in
     "-w /boot -p wa -k boot_write"
 
     # SSH authorized keys changes
-    "-w /home/phatle/.ssh/authorized_keys -p wa -k ssh_keys"
+    "-w ${config.users.users.phatle.home}/.ssh/authorized_keys -p wa -k ssh_keys"
 
     # Hosts file changes
     "-w /etc/hosts -p wa -k hosts_change"
@@ -136,6 +136,21 @@ in
 
     # ── Prevent runtime kernel replacement ────────────────────────────────
     "kernel.kexec_load_disabled" = 1;
+
+    # ── io_uring (CVE-2024-1086 family) ───────────────────────────────────
+    # 0 = enabled, 1 = root only, 2 = fully disabled.
+    # Lower to 1 if a workload genuinely needs unprivileged io_uring.
+    "kernel.io_uring_disabled" = 2;
+
+    # ── User namespaces — pinned so the default can't flip silently ───────
+    # podman rootless + distrobox both need this. Don't lower.
+    "kernel.unprivileged_userns_clone" = 1;
+
+    # ── Coredump path — belt-and-braces with systemd.coredump above ───────
+    "kernel.core_pattern" = "|/bin/false";
+
+    # ── TIOCSTI: classic terminal escape attack vector ────────────────────
+    "dev.tty.legacy_tiocsti" = 0;
   };
 
   # On kernel 7.x, audit_backlog_limit, failure mode (-f), rate (-r), and

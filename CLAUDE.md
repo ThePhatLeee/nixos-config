@@ -23,15 +23,12 @@ flake.nix           single host: nixosConfigurations.nixos
 
 ## Apply changes
 
+NEVER run rebuilds yourself — the user runs `nh os switch` (needs sudo). After config changes, run `nix flake check --no-build` to verify eval, then tell the user to rebuild.
+
 ```bash
-# Full system rebuild (as root):
-sudo nixos-rebuild switch --flake ~/nixos-config#nixos
-
-# Home-manager only (faster, no sudo):
-home-manager switch --flake ~/nixos-config#phatle
-
-# Check eval without building:
-nix flake check
+nh os switch          # full system + home rebuild (user runs)
+nh home switch        # home-manager only, no sudo (user runs)
+nix flake check       # eval-only validation (you may run)
 ```
 
 ## Stack
@@ -45,4 +42,4 @@ nix flake check
 
 ## Read before writing Nix
 
-Load `~/.claude/skills/nix-guidelines.md` before making any changes to this repo.
+Load the `/nix` skill (`~/.claude/skills/nix/SKILL.md`) before making any changes to this repo.

@@ -12,4 +12,4 @@ require("conf.windowrules")
 require("conf.autostart")
 
 -- This loads Noctalia-generated Hyprland colors.
-dofile("/home/phatle/.config/hypr/noctalia/noctalia-colors.lua")
+dofile(os.getenv("HOME") .. "/.config/hypr/noctalia/noctalia-colors.lua")
